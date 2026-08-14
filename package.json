@@ -1,33 +1,35 @@
 {
-  "name": "tokosans",
-  "type": "module",
-  "version": "0.0.1",
-  "engines": {
-    "node": ">=20.0.0"
-  },
-  "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro"
-  },
-  "dependencies": {
-    "@astrojs/check": "^0.9.10",
-    "@astrojs/node": "^9.3.0",
-    "@astrojs/react": "^4.4.2",
-    "@lucide/astro": "^1.31.0",
-    "@supabase/supabase-js": "^2.57.4",
-    "@types/ws": "^8.18.1",
-    "astro": "^5.15.1",
-    "lucide-react": "^1.31.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-hot-toast": "^2.6.0",
-    "resend": "^6.19.0",
-    "typescript": "^5.9.3",
-    "ws": "^8.21.3"
-  },
-  "devDependencies": {
-    "@types/nodemailer": "^8.0.1"
-  }
+   "name": "tokosans",
+   "type": "module",
+   "version": "0.0.1",
+   "engines": {
+      "node": ">=20.0.0"
+   },
+   "scripts": {
+      "dev": "astro dev",
+      "build": "astro build",
+      "start": "node ./dist/server/entry.mjs",
+      "preview": "astro preview",
+      "astro": "astro"
+   },
+   "dependencies": {
+      "@astrojs/check": "^0.9.10",
+      "@astrojs/node": "^9.3.0",
+      "@astrojs/react": "^4.4.2",
+      "@lucide/astro": "^1.31.0",
+      "@supabase/supabase-js": "^2.57.4",
+      "@types/ws": "^8.18.1",
+      "astro": "^5.15.1",
+      "lucide-react": "^1.31.0",
+      "react": "^19.2.8",
+      "react-dom": "^19.2.8",
+      "nodemailer": "^6.9.16",
+      "react-hot-toast": "^2.6.0",
+      "resend": "^6.19.0",
+      "typescript": "^5.9.3",
+      "ws": "^8.21.3"
+   },
+   "devDependencies": {
+      "@types/nodemailer": "^8.0.1"
+   }
 }
