@@ -1,0 +1,466 @@
+---
+import { getCategories } from '../../lib/categories';
+import ToastProvider from '../../components/ToastProvider';
+import AdminSidebar from '../../components/AdminSidebar.astro';
+const categories = await getCategories();
+---
+<ToastProvider client:load />
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kategori - Admin Dashboard - TokoSans</title>
+  <style is:global>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+    :root {
+      --ink: #191026;
+      --muted: #6b6178;
+      --v: #7048e8;
+      --v2: #5c35d4;
+      --l: #f3edff;
+      --line: #eae3f5;
+      --bg: #faf8fe;
+      --surface: #ffffff;
+      --red: #ef4444;
+      --red-bg: #fef2f2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -.03em; }
+
+    .layout { display: flex; min-height: 100vh; }
+    .content { flex: 1; margin-left: 250px; padding: 40px 48px 80px; max-width: 1100px; }
+
+    .page-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      gap: 20px;
+    }
+    .page-title h1 { margin: 0 0 6px; font-size: 2rem; font-weight: 800; color: var(--ink); }
+    .page-title p { margin: 0; color: var(--muted); font-size: .95rem; }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      background: var(--v);
+      color: #fff;
+      font-weight: 700;
+      font-size: .9rem;
+      border-radius: 12px;
+      text-decoration: none;
+      border: 0;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(112, 72, 232, 0.25);
+      transition: all .15s ease;
+    }
+    .btn-primary:hover { background: var(--v2); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(112, 72, 232, 0.35); }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(112, 72, 232, 0.04);
+      overflow: hidden;
+    }
+    .table-scroll { width: 100%; overflow-x: auto; }
+    .cat-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; font-size: .9rem; }
+    .cat-table th {
+      background: #faf8fd;
+      padding: 14px 24px;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      border-bottom: 1px solid var(--line);
+    }
+    .cat-table td {
+      padding: 18px 24px;
+      border-bottom: 1px solid #f4effa;
+      vertical-align: middle;
+      background: var(--surface);
+    }
+    .cat-table tr:last-child td { border-bottom: none; }
+    .cat-table tr:hover td { background: #faf8ff; }
+
+    .cat-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--l);
+      color: var(--v);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .cat-info { display: flex; align-items: center; gap: 14px; }
+    .cat-name { font-weight: 700; color: var(--ink); font-size: .95rem; }
+    .cat-desc { color: var(--muted); font-size: .88rem; line-height: 1.45; max-width: 480px; }
+    .cat-desc.empty { color: #aaa1b8; font-style: italic; }
+
+    .actions-flex { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+    .btn-edit {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--v);
+      font-weight: 700;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .btn-edit:hover { background: var(--l); border-color: #d8b4fe; }
+
+    .btn-delete {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border: 1px solid #fca5a5;
+      border-radius: 9px;
+      background: var(--red-bg);
+      color: var(--red);
+      font-weight: 700;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .btn-delete:hover { background: var(--red); color: #fff; border-color: var(--red); }
+
+    .empty-state {
+      padding: 60px 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .empty-state svg { color: #c4b5fd; margin-bottom: 12px; }
+    .empty-state h3 { margin: 0 0 6px; color: var(--ink); font-size: 1.1rem; }
+    .empty-state p { margin: 0; font-size: .88rem; }
+
+    /* Modal Styling */
+    .modal {
+      border: 0;
+      border-radius: 20px;
+      padding: 0;
+      width: min(520px, calc(100% - 32px));
+      box-shadow: 0 24px 60px rgba(25, 16, 38, 0.25);
+      background: var(--surface);
+    }
+    .modal::backdrop { background: rgba(25, 16, 38, 0.5); backdrop-filter: blur(4px); }
+    .modal-card { padding: 32px; }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .modal-header h2 { margin: 0; font-size: 1.35rem; font-weight: 800; }
+    .btn-close-icon {
+      background: none;
+      border: 0;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s ease;
+    }
+    .btn-close-icon:hover { background: var(--bg); color: var(--ink); }
+
+    .modal-form { display: grid; gap: 18px; }
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-group label { font-weight: 700; font-size: .85rem; color: var(--ink); }
+    .field-group input, .field-group textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: .9rem;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--ink);
+      background: var(--surface);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field-group input:focus, .field-group textarea:focus {
+      border-color: var(--v);
+      box-shadow: 0 0 0 3px rgba(112, 72, 232, 0.12);
+    }
+    .field-group textarea { min-height: 110px; resize: vertical; }
+
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+    .btn-secondary {
+      padding: 11px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: .88rem;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    .btn-secondary:hover { background: var(--bg); color: var(--ink); }
+
+    .message { color: var(--red); font-weight: 600; font-size: .88rem; margin: 0; }
+
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; }
+      .content { margin-left: 0; padding: 24px 20px; }
+      .page-head { flex-direction: column; align-items: flex-start; }
+      .cat-desc { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <AdminSidebar active="categories" />
+  <main class="content">
+    <div class="page-head">
+      <div class="page-title">
+        <h1>Kelola Kategori</h1>
+        <p>Tambah, ubah, atau hapus kategori produk toko Anda.</p>
+      </div>
+      <button type="button" class="btn-primary" id="open-create">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Tambah Kategori
+      </button>
+    </div>
+
+    <section class="panel">
+      <div class="table-scroll">
+        <table class="cat-table">
+          <thead>
+            <tr>
+              <th>Kategori</th>
+              <th>Deskripsi</th>
+              <th style="text-align: right;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="categories-tbody">
+            {categories.length === 0 ? (
+              <tr>
+                <td colspan="3">
+                  <div class="empty-state">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+                    <h3>Belum ada kategori</h3>
+                    <p>Klik tombol "Tambah Kategori" di atas untuk membuat kategori baru.</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              categories.map((category) => (
+                <tr>
+                  <td>
+                    <div class="cat-info">
+                      <div class="cat-badge">{category.name.charAt(0).toUpperCase()}</div>
+                      <span class="cat-name">{category.name}</span>
+                    </div>
+                  </td>
+                  <td>
+                    {category.description ? (
+                      <span class="cat-desc">{category.description}</span>
+                    ) : (
+                      <span class="cat-desc empty">Belum ada deskripsi.</span>
+                    )}
+                  </td>
+                  <td>
+                    <div class="actions-flex">
+                      <button
+                        type="button"
+                        class="btn-edit"
+                        data-edit={category.id}
+                        data-name={category.name}
+                        data-description={category.description || ''}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Ubah
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-delete"
+                        data-delete={category.id}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                        Hapus
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <dialog class="modal" id="category-modal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="modal-title">Tambah Kategori</h2>
+          <button type="button" class="btn-close-icon" id="close-modal-icon" title="Tutup">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <form class="modal-form" id="category-form">
+          <input type="hidden" name="id"/>
+          <div class="field-group">
+            <label for="cat-name-input">Nama Kategori</label>
+            <input id="cat-name-input" name="name" required maxlength="50" placeholder="Contoh: Streaming, Gaming, Software..."/>
+          </div>
+          <div class="field-group">
+            <label for="cat-desc-input">Deskripsi Kategori</label>
+            <textarea id="cat-desc-input" name="description" maxlength="2000" placeholder="Tuliskan penjelasan singkat mengenai kategori ini..."></textarea>
+          </div>
+          <p class="message" id="message"></p>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="close-modal">Batal</button>
+            <button type="submit" class="btn-primary">Simpan Kategori</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+  </main>
+</div>
+<script>
+const modal = document.querySelector('#category-modal') as HTMLDialogElement;
+const form = document.querySelector('#category-form') as HTMLFormElement;
+const message = document.querySelector('#message') as HTMLElement;
+const title = document.querySelector('#modal-title') as HTMLElement;
+const notify = (type: string, text: string) => window.dispatchEvent(new CustomEvent('app:toast', { detail: { type, message: text } }));
+
+const call = async (method: string, body: any) => {
+  const response = await fetch('/api/admin/categories', {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) {
+    const res = await response.json().catch(() => ({}));
+    throw new Error(res.message || 'Gagal memproses permintaan.');
+  }
+  notify('success', method === 'DELETE' ? 'Kategori berhasil dihapus.' : 'Kategori berhasil disimpan.');
+  setTimeout(() => location.reload(), 600);
+};
+
+const openModal = (data: { id?: string; name?: string; description?: string } | null = null) => {
+  form.reset();
+  message.textContent = '';
+  (form.elements.namedItem('id') as HTMLInputElement).value = data?.id || '';
+  (form.elements.namedItem('name') as HTMLInputElement).value = data?.name || '';
+  (form.elements.namedItem('description') as HTMLTextAreaElement).value = data?.description || '';
+  title.textContent = data?.id ? 'Ubah Kategori' : 'Tambah Kategori';
+  modal.showModal();
+};
+
+document.querySelector('#open-create')?.addEventListener('click', () => openModal());
+document.querySelector('#close-modal')?.addEventListener('click', () => modal.close());
+document.querySelector('#close-modal-icon')?.addEventListener('click', () => modal.close());
+
+modal?.addEventListener('click', (event) => {
+  if (event.target === modal) modal.close();
+});
+
+form?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+  if (submitBtn) submitBtn.disabled = true;
+  message.textContent = '';
+
+  const formData = Object.fromEntries(new FormData(form));
+  try {
+    await call(formData.id ? 'PATCH' : 'POST', formData);
+  } catch (error) {
+    message.textContent = error instanceof Error ? error.message : 'Gagal menyimpan kategori.';
+    if (submitBtn) submitBtn.disabled = false;
+  }
+});
+
+document.querySelectorAll('[data-edit]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const ds = (button as HTMLElement).dataset;
+    openModal({ id: ds.edit, name: ds.name, description: ds.description });
+  });
+});
+
+document.querySelectorAll('[data-delete]').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const id = (button as HTMLElement).dataset.delete;
+    if (!id || !confirm('Yakin ingin menghapus kategori ini?')) return;
+    (button as HTMLButtonElement).disabled = true;
+    try {
+      await call('DELETE', { id });
+    } catch (error) {
+      notify('error', error instanceof Error ? error.message : 'Gagal menghapus kategori.');
+      (button as HTMLButtonElement).disabled = false;
+    }
+  });
+});
+
+let currentCatPage = 1;
+const catPerPage = 10;
+const catRows = document.querySelectorAll('#categories-tbody tr');
+
+function renderCatPagination() {
+  const totalVisible = catRows.length;
+  const totalPages = Math.ceil(totalVisible / catPerPage) || 1;
+  if (currentCatPage > totalPages) currentCatPage = totalPages;
+  if (currentCatPage < 1) currentCatPage = 1;
+
+  const startIdx = (currentCatPage - 1) * catPerPage;
+  const endIdx = startIdx + catPerPage;
+
+  catRows.forEach((row, idx) => {
+    (row as HTMLElement).style.display = idx >= startIdx && idx < endIdx ? '' : 'none';
+  });
+
+  const infoEl = document.getElementById('categories-page-info');
+  if (infoEl) {
+    if (totalVisible === 0) {
+      infoEl.textContent = 'Tidak ada kategori';
+    } else {
+      infoEl.textContent = `Menampilkan ${startIdx + 1}–${Math.min(endIdx, totalVisible)} dari ${totalVisible} kategori (Hal ${currentCatPage}/${totalPages})`;
+    }
+  }
+
+  const prevBtn = document.getElementById('cat-prev-btn') as HTMLButtonElement;
+  const nextBtn = document.getElementById('cat-next-btn') as HTMLButtonElement;
+  if (prevBtn) {
+    prevBtn.disabled = currentCatPage <= 1;
+    prevBtn.style.opacity = currentCatPage <= 1 ? '0.5' : '1';
+    prevBtn.style.cursor = currentCatPage <= 1 ? 'not-allowed' : 'pointer';
+  }
+  if (nextBtn) {
+    nextBtn.disabled = currentCatPage >= totalPages;
+    nextBtn.style.opacity = currentCatPage >= totalPages ? '0.5' : '1';
+    nextBtn.style.cursor = currentCatPage >= totalPages ? 'not-allowed' : 'pointer';
+  }
+}
+
+document.getElementById('cat-prev-btn')?.addEventListener('click', () => {
+  if (currentCatPage > 1) { currentCatPage--; renderCatPagination(); }
+});
+document.getElementById('cat-next-btn')?.addEventListener('click', () => {
+  currentCatPage++; renderCatPagination();
+});
+renderCatPagination();
+</script></body></html> 

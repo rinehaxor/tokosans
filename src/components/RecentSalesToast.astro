@@ -1,0 +1,370 @@
+---
+import { getProducts } from '../lib/products';
+import { getSupabaseAdmin } from '../lib/supabase';
+import { formatRupiah } from '../lib/catalog';
+
+let dbProducts: any[] = [];
+let productImages: Record<string, string> = {};
+
+try {
+  dbProducts = await getProducts();
+  const db = getSupabaseAdmin();
+  const { data: inventory } = await db.from('inventory').select('product_id,image_url');
+  for (const item of inventory ?? []) {
+    if (item.image_url) productImages[item.product_id] = item.image_url;
+  }
+} catch {}
+
+const defaultItems = [
+  { id: 'chatgpt-plus', name: 'Chat GPT plus', price: 150000, original_price: 445000, icon: '🤖' },
+  { id: 'canva-pro-1m', name: 'Canva Pro', duration: '1 Bulan', price: 1000, original_price: 2000, icon: '✦' },
+  { id: 'capcut-pro-1m', name: 'CapCut Pro', duration: '1 Bulan', price: 18000, original_price: 29000, icon: '◈' },
+  { id: 'netflix-1m', name: 'Netflix Premium', duration: 'Ultra HD', price: 35000, original_price: 56000, icon: 'N' },
+  { id: 'spotify-1m', name: 'Spotify Premium', duration: '1 Bulan', price: 20000, original_price: 32000, icon: '♫' },
+  { id: 'youtube-1m', name: 'YouTube Premium', duration: '1 Bulan', price: 15000, original_price: 60000, icon: '▶' },
+  { id: 'claude-pro-1m', name: 'Claude Pro', duration: '1 Bulan', price: 150000, original_price: 400000, icon: '✦' },
+  { id: 'prime-video-1m', name: 'Prime Video', duration: '1 Bulan', price: 22000, original_price: 35000, icon: '▶' },
+  { id: 'wetv-vip-1m', name: 'WeTV VIP', duration: '1 Bulan', price: 17000, original_price: 27000, icon: 'W' }
+];
+
+function getBrandTheme(name: string) {
+  const n = name.toLowerCase();
+  if (n.includes('gpt') || n.includes('chatgpt')) return { iconText: '🤖', iconBg: '#10a37f' };
+  if (n.includes('canva')) return { iconText: '✦', iconBg: 'linear-gradient(135deg, #7048e8, #8c64f7)' };
+  if (n.includes('capcut')) return { iconText: '◈', iconBg: '#18181b' };
+  if (n.includes('netflix')) return { iconText: 'N', iconBg: '#e50914' };
+  if (n.includes('spotify')) return { iconText: '♫', iconBg: '#1db954' };
+  if (n.includes('youtube')) return { iconText: '▶', iconBg: '#ff0000' };
+  if (n.includes('claude')) return { iconText: '✦', iconBg: '#d97706' };
+  if (n.includes('prime')) return { iconText: '▶', iconBg: '#00a8e1' };
+  if (n.includes('wetv')) return { iconText: 'W', iconBg: '#ff6000' };
+  return { iconText: '✦', iconBg: 'linear-gradient(135deg, #7048e8, #5b34d1)' };
+}
+
+const rawList = dbProducts.length ? dbProducts : defaultItems;
+const toastProducts = rawList.map((p) => {
+  const imageUrl = p.image_url || productImages[p.id] || null;
+  const name = p.name + (p.duration && !p.name.includes(p.duration) ? ` ${p.duration}` : '');
+  const price = p.price ?? 0;
+  const origPrice = p.original_price && p.original_price > price ? p.original_price : Math.round(price * 1.6);
+  const diff = Math.max(0, origPrice - price);
+  const savingsText = diff > 0 ? `🔥 Hemat ${formatRupiah(diff)}` : '';
+  const theme = getBrandTheme(p.name);
+  return {
+    id: p.id,
+    name,
+    savings: savingsText,
+    iconText: p.icon || theme.iconText,
+    iconBg: theme.iconBg,
+    image_url: imageUrl
+  };
+});
+---
+
+
+<div id="recent-sales-toast" class="recent-sales-toast" aria-live="polite">
+  <div class="sales-toast-card">
+    <div class="sales-toast-icon" id="sales-toast-icon-bg">
+      <img id="sales-toast-img" class="sales-toast-img" src="" alt="" style="display: none;" />
+      <span id="sales-toast-icon-text">🤖</span>
+      <span class="sales-toast-verified" title="Transaksi Terverifikasi">✓</span>
+    </div>
+    <div class="sales-toast-content">
+      <div class="sales-toast-header">
+        <span class="sales-toast-name" id="sales-toast-name">Siti R***</span>
+        <span class="sales-toast-time" id="sales-toast-time">Baru saja</span>
+      </div>
+      <div class="sales-toast-product">
+        Membeli <a href="/#produk" class="sales-toast-link" id="sales-toast-product-name">Prime Video 1 Bulan</a>
+      </div>
+      <div class="sales-toast-savings-badge" id="sales-toast-savings">
+        🔥 Hemat Rp13.000
+      </div>
+    </div>
+    <button type="button" class="sales-toast-close" id="sales-toast-close-btn" aria-label="Tutup">&times;</button>
+  </div>
+</div>
+
+<style>
+  .recent-sales-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 9990;
+    pointer-events: none;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .sales-toast-card {
+    background: #ffffff;
+    border: 1px solid #e8e2f2;
+    border-radius: 16px;
+    padding: 12px 16px;
+    box-shadow: 0 12px 32px rgba(112, 72, 232, 0.12), 0 2px 8px rgba(32, 22, 48, 0.04);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 310px;
+    max-width: 380px;
+    position: relative;
+    transform: translateY(120px);
+    opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
+    box-sizing: border-box;
+  }
+
+  .recent-sales-toast.show .sales-toast-card {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sales-toast-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: #7048e8;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(112, 72, 232, 0.2);
+  }
+
+  .sales-toast-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 14px;
+    display: block;
+  }
+
+  .sales-toast-verified {
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    width: 16px;
+    height: 16px;
+    background: #7048e8;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    font-size: 0.62rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(112, 72, 232, 0.3);
+  }
+
+  .sales-toast-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .sales-toast-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    line-height: 1.25;
+  }
+
+  .sales-toast-name {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: #201630;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sales-toast-time {
+    font-size: 0.75rem;
+    color: #776d83;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .sales-toast-product {
+    font-size: 0.82rem;
+    color: #554a66;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sales-toast-link {
+    color: #7048e8;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .sales-toast-link:hover {
+    color: #5b34d1;
+    text-decoration: underline;
+  }
+
+  .sales-toast-savings-badge {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f1edff;
+    color: #7048e8;
+    border: 1px solid #d8cefd;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 99px;
+    margin-top: 1px;
+    line-height: 1.2;
+  }
+
+  .sales-toast-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #a094b8;
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
+  }
+
+  .sales-toast-card:hover .sales-toast-close {
+    opacity: 1;
+  }
+
+  .sales-toast-close:hover {
+    color: #201630;
+  }
+
+  @media (max-width: 600px) {
+    .recent-sales-toast {
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+    }
+    .sales-toast-card {
+      min-width: 0;
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+</style>
+
+<script define:vars={{ toastProducts }}>
+  (function () {
+    const buyers = [
+      'Siti R***', 'Wiwin A***', 'Budi S***', 'Dian K***', 'Rizky M***', 'Dwi M***',
+      'Agus W***', 'Putri L***', 'Hendra T***', 'Novi R***', 'Bayu K***',
+      'Sari W***', 'Fitri N***', 'Reza H***', 'Eko S***',
+      'Mega C***', 'Indra B***', 'Tri K***', 'Lia U***', 'Rian P***',
+      'Fajar R***', 'Yuni A***', 'Dimas S***', 'Anisa F***', 'Rahmat H***'
+    ];
+
+    const timeAgoList = [
+      'Baru saja', '1 menit lalu', '3 menit lalu', '5 menit lalu',
+      '12 menit lalu', '18 menit lalu', '25 menit lalu', '34 menit lalu',
+      '45 menit lalu', '58 menit lalu', '1 jam yang lalu'
+    ];
+
+    const container = document.getElementById('recent-sales-toast');
+    const nameEl = document.getElementById('sales-toast-name');
+    const timeEl = document.getElementById('sales-toast-time');
+    const prodEl = document.getElementById('sales-toast-product-name');
+    const savEl = document.getElementById('sales-toast-savings');
+    const iconBgEl = document.getElementById('sales-toast-icon-bg');
+    const iconTextEl = document.getElementById('sales-toast-icon-text');
+    const imgEl = document.getElementById('sales-toast-img');
+    const closeBtn = document.getElementById('sales-toast-close-btn');
+
+    if (!container || !nameEl || !timeEl || !prodEl || !savEl || !iconBgEl || !iconTextEl) return;
+
+    let isDismissed = false;
+    let timerId = null;
+
+    closeBtn?.addEventListener('click', () => {
+      isDismissed = true;
+      container.classList.remove('show');
+      if (timerId) clearTimeout(timerId);
+    });
+
+    function getRandomItem(arr) {
+      if (!arr || !arr.length) return null;
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function showToast() {
+      if (isDismissed) return;
+
+      const buyer = getRandomItem(buyers);
+      const prod = getRandomItem(toastProducts);
+      const time = getRandomItem(timeAgoList);
+
+      if (!prod) return;
+
+      nameEl.textContent = buyer;
+      timeEl.textContent = time;
+      prodEl.textContent = prod.name;
+      if (prod.id) {
+        prodEl.href = '/checkout?product=' + encodeURIComponent(prod.id);
+      } else {
+        prodEl.href = '/#produk';
+      }
+      savEl.textContent = prod.savings || '🔥 Promo Terbatas';
+
+      // Gambar Produk vs Icon Brand
+      if (prod.image_url && imgEl) {
+        imgEl.src = prod.image_url;
+        imgEl.alt = prod.name;
+        imgEl.style.display = 'block';
+        iconTextEl.style.display = 'none';
+        iconBgEl.style.background = 'transparent';
+      } else {
+        if (imgEl) imgEl.style.display = 'none';
+        iconTextEl.style.display = 'block';
+        iconTextEl.textContent = prod.iconText || '✦';
+
+        if (prod.iconBg && prod.iconBg.includes('gradient')) {
+          iconBgEl.style.background = prod.iconBg;
+        } else if (prod.iconBg) {
+          iconBgEl.style.backgroundColor = prod.iconBg;
+          iconBgEl.style.background = prod.iconBg;
+        }
+      }
+
+      container.classList.add('show');
+
+      // Toast tampil selama 6 detik
+      setTimeout(() => {
+        if (isDismissed) return;
+        container.classList.remove('show');
+
+        // Jadwal notifikasi berikutnya antara 12 - 35 detik
+        const nextInterval = Math.floor(Math.random() * (35000 - 12000 + 1)) + 12000;
+        timerId = setTimeout(showToast, nextInterval);
+      }, 6000);
+    }
+
+    // Delay awal: 3.5 detik setelah halaman dimuat
+    setTimeout(showToast, 3500);
+  })();
+</script>

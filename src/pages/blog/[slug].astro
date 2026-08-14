@@ -1,0 +1,76 @@
+---
+import { getPostBySlug, formatBlogDate, estimateReadTime } from '../../lib/blog';
+import RecentSalesToast from '../../components/RecentSalesToast.astro';
+
+const { slug } = Astro.params;
+const post = slug ? await getPostBySlug(slug) : null;
+if (!post || post.status !== 'published') return Astro.redirect('/blog');
+
+function md2html(md: string): string {
+  let h = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  h = h.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
+  h = h.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="content-img"/>');
+  h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  h = h.replace(/^---$/gm, '<hr/>');
+  h = h.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  h = h.replace(/^- (.+)$/gm, '<li>$1</li>');
+  h = h.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  h = h.replace(/\n\n/g, '</p><p>');
+  return '<p>' + h + '</p>';
+}
+const htmlContent = md2html(post.content);
+const readTime = estimateReadTime(post.content);
+---
+
+<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content={post.excerpt || post.title}/><title>{post.title} — tokosans.</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+:root{--ink:#201630;--muted:#746a80;--v:#7048e8;--l:#f0ecff;--line:#e8e2f2;--bg:#fdfcff}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif}
+h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
+.shell{max-width:1180px;margin:auto;padding:0 28px}
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(253,252,255,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav{height:76px;display:flex;align-items:center;justify-content:space-between}
+.logo{font:800 1.55rem 'Plus Jakarta Sans';letter-spacing:-1.5px;color:var(--ink);text-decoration:none}.logo b{color:var(--v)}
+.nav-links{display:flex;align-items:center;gap:27px}.nav-links a{color:#5f566a;font-size:.9rem;font-weight:700;text-decoration:none}
+.nav-cta{padding:11px 16px;background:var(--ink);color:#fff!important;display:inline-flex;align-items:center;border-radius:12px;text-decoration:none;font-weight:700}
+.article-header{max-width:760px;margin:60px auto 0;text-align:center}
+.article-header h1{font-size:clamp(1.8rem,3.5vw,2.8rem);margin:0 0 16px;line-height:1.2}
+.article-meta{display:flex;align-items:center;justify-content:center;gap:14px;font-size:.88rem;color:var(--muted);font-weight:600;margin-bottom:32px}
+.article-cover{max-width:760px;margin:0 auto 40px;border-radius:20px;overflow:hidden;border:1px solid var(--line)}
+.article-cover img{width:100%;height:auto;display:block}
+.article-content{max-width:700px;margin:0 auto 80px;font-size:1.02rem;line-height:1.85;color:#2d2340}
+.article-content h2{font-size:1.4rem;margin:36px 0 12px;color:var(--ink)}
+.article-content h3{font-size:1.15rem;margin:28px 0 10px;color:var(--ink)}
+.article-content p{margin:0 0 18px}
+.article-content a{color:var(--v);font-weight:600}
+.article-content blockquote{border-left:3px solid var(--v);padding:10px 20px;margin:20px 0;color:var(--muted);background:#faf8fe;border-radius:0 10px 10px 0}
+.article-content pre{background:#f8f5ff;padding:20px;border-radius:12px;overflow-x:auto;font-size:.88rem;border:1px solid var(--line);margin:20px 0}
+.article-content code{background:var(--l);padding:2px 7px;border-radius:5px;font-size:.88rem;color:var(--v)}
+.article-content pre code{background:none;padding:0;color:var(--ink)}
+.article-content li{margin:6px 0;margin-left:24px}
+.article-content hr{border:none;border-top:1px solid var(--line);margin:32px 0}
+.content-img{max-width:100%;border-radius:12px;margin:16px 0}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--v);font-weight:700;font-size:.9rem;text-decoration:none;margin-bottom:20px}
+.back-link:hover{text-decoration:underline}
+.footer{padding:40px 0;text-align:center;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
+@media(max-width:600px){.nav-links{gap:16px}.article-header{margin-top:40px}}
+</style></head><body>
+<header class="site-header"><div class="shell"><nav class="nav"><a class="logo" href="/">tokosans<b>.</b></a><div class="nav-links"><a href="/#produk">Produk</a><a href="/blog" style="color:var(--v)">Blog</a><a href="/#faq">FAQ</a><a class="nav-cta" href="/#produk">Belanja</a></div></nav></div></header>
+<div class="shell">
+<div class="article-header">
+<a href="/blog" class="back-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Kembali ke Blog</a>
+<h1>{post.title}</h1>
+<div class="article-meta"><span>{formatBlogDate(post.published_at!)}</span><span>·</span><span>{readTime} menit baca</span></div>
+</div>
+{post.cover_url && <div class="article-cover"><img src={post.cover_url} alt={post.title}/></div>}
+<article class="article-content" set:html={htmlContent}/>
+</div>
+<footer class="footer"><div class="shell">© 2026 tokosans. Seluruh hak cipta dilindungi.</div></footer>
+<RecentSalesToast />
+</body></html>

@@ -1,0 +1,128 @@
+---
+import { getProducts } from '../../../lib/products';
+import { getProductPackages } from '../../../lib/packages';
+import ToastProvider from '../../../components/ToastProvider';
+import AdminSidebar from '../../../components/AdminSidebar.astro';
+
+const managedProducts = await getProducts();
+const packageMap = Object.fromEntries(await Promise.all(managedProducts.map(async (product) => [product.id, await getProductPackages(product)])));
+---
+<ToastProvider client:load />
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tambah Stok Akun - Admin Dashboard - TokoSans</title>
+  <style is:global>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+    :root { --ink:#191026; --muted:#6b6178; --v:#7048e8; --v2:#5c35d4; --l:#f3edff; --line:#eae3f5; --bg:#faf8fe; --surface:#ffffff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+    h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -.03em; }
+    .layout { display: flex; min-height: 100vh; }
+    .main-content { margin-left: 250px; flex: 1; padding: 36px 40px 60px; max-width: 760px; }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--v); text-decoration: none; font-weight: 700; font-size: .85rem; margin-bottom: 20px; }
+    .header-bar { margin-bottom: 28px; }
+    .header-bar h1 { margin: 0; font-size: 2rem; font-weight: 800; }
+    .header-bar p { margin: 4px 0 0; color: var(--muted); font-size: .92rem; }
+    .form-card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 32px; box-shadow: 0 4px 24px rgba(112, 72, 232, .04); }
+    .form-grid { display: grid; gap: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group label { font-weight: 700; font-size: .84rem; color: var(--ink); }
+    .form-group input, .form-group select { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: .9rem; font-weight: 500; font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface); outline: none; transition: border-color .15s; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--v); box-shadow: 0 0 0 3px rgba(112, 72, 232, .12); }
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; padding-top: 20px; border-top: 1px solid var(--line); }
+    .btn-secondary { padding: 11px 20px; border-radius: 12px; font-weight: 700; font-size: .88rem; color: var(--muted); border: 1px solid var(--line); background: var(--surface); text-decoration: none; display: inline-flex; align-items: center; transition: all .15s ease; }
+    .btn-secondary:hover { background: #f5f0fb; color: var(--ink); }
+    .btn-primary { padding: 11px 22px; border-radius: 12px; font-weight: 700; font-size: .88rem; color: #fff; border: 0; background: var(--v); cursor: pointer; transition: all .15s ease; box-shadow: 0 4px 16px rgba(112, 72, 232, .25); }
+    .btn-primary:hover { background: var(--v2); }
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; }
+      .main-content { margin-left: 0; padding: 24px 20px; }
+    }
+  </style></head>
+<body>
+<div class="layout">
+  <AdminSidebar active="accounts" />
+  <main class="main-content">
+    <a class="back-link" href="/dashboard/accounts">← Kembali ke Daftar Akun</a>
+    <div class="header-bar">
+      <h1>Import Bulk Stok Akun</h1>
+      <p>Upload file CSV/TXT atau tempel daftar akun (email:password) secara instan.</p>
+    </div>
+    <div class="form-card">
+      <form class="form-grid" id="bulk-import-form">
+        <div class="form-group">
+          <label>Pilih Produk</label>
+          <select name="productId" required>
+            {managedProducts.map((product) => <option value={product.id}>{product.name}</option>)}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Pilih Paket</label>
+          <select name="packageId" id="packageId" required><option value="">Pilih paket</option></select>
+        </div>
+        <div class="form-group">
+          <label>Pemisah / Delimiter Format</label>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600;cursor:pointer;"><input type="radio" name="delimiter" value="auto" checked /> Auto Detect</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600;cursor:pointer;"><input type="radio" name="delimiter" value=":" /> Titik Dua (<code>:</code>)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600;cursor:pointer;"><input type="radio" name="delimiter" value="|" /> Garis Tegak (<code>|</code>)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600;cursor:pointer;"><input type="radio" name="delimiter" value="," /> Koma (<code>,</code>)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:600;cursor:pointer;"><input type="radio" name="delimiter" value="tab" /> Tab</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Upload File (.txt / .csv)</label>
+          <input type="file" id="file-input" accept=".txt,.csv,.tsv" style="border: 1px dashed var(--v); padding: 12px; border-radius: 12px; cursor: pointer;" />
+          <span id="upload-label" style="font-size: .8rem; color: var(--muted);"></span>
+        </div>
+        <div class="form-group">
+          <label>Atau Tempel Teks Credential (Satu Akun Per Baris)</label>
+          <textarea id="raw-text" rows="6" placeholder="email1@example.com:pass123&#10;email2@example.com:pass456" style="border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-family: monospace; font-size: .85rem; width: 100%;"></textarea>
+        </div>
+        <div id="preview-container" style="display: none; border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: #faf9fe;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="margin: 0; font-size: .95rem; font-weight: 700;">Pratinjau Impor Akun</h3>
+            <div>
+              <span id="badge-valid" style="background: #ecfdf5; color: #10b981; padding: 4px 10px; border-radius: 20px; font-size: .75rem; font-weight: 700; display: inline-block;">0 Valid</span>
+              <span id="badge-invalid" style="background: #fef2f2; color: #ef4444; padding: 4px 10px; border-radius: 20px; font-size: .75rem; font-weight: 700; display: none;">0 Dilewati</span>
+            </div>
+          </div>
+          <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; background: #fff;">
+            <table style="width: 100%; border-collapse: collapse; font-size: .82rem; text-align: left;">
+              <thead>
+                <tr style="background: #f5f1fc; color: var(--muted); border-bottom: 1px solid var(--line);">
+                  <th style="padding: 8px 12px; width: 40px;">#</th>
+                  <th style="padding: 8px 12px;">Login / Username</th>
+                  <th style="padding: 8px 12px;">Password / License Key</th>
+                </tr>
+              </thead>
+              <tbody id="preview-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="form-actions">
+          <a class="btn-secondary" href="/dashboard/accounts">Batal</a>
+          <button class="btn-primary" type="submit" id="submit-btn" disabled>Import Semua Akun</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+<script define:vars={{ packageMap }}>
+  const productSelect = document.querySelector('select[name="productId"]');
+  const packageSelect = document.querySelector('#packageId');
+  const loadPackages = () => {
+    packageSelect.innerHTML = '<option value="">Pilih paket</option>';
+    (packageMap[productSelect.value] ?? []).forEach((item) => {
+      const label = item.name === item.duration ? item.name : `${item.name} - ${item.duration}`;
+      packageSelect.insertAdjacentHTML('beforeend', `<option value="${item.id}">${label}</option>`);
+    });
+  };
+  productSelect?.addEventListener('change', loadPackages);
+  loadPackages();
+</script>
+<script src="../../../scripts/bulk-import-accounts.ts"></script>
+</body>
+</html>

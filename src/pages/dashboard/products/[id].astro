@@ -1,0 +1,396 @@
+---
+import { getProduct } from '../../../lib/products';
+import { getProductPackages, type ProductPackage } from '../../../lib/packages';
+import { getCategories } from '../../../lib/categories';
+import ToastProvider from '../../../components/ToastProvider';
+import AdminSidebar from '../../../components/AdminSidebar.astro';
+
+const id = Astro.params.id ?? 'new';
+const product = id === 'new' ? null : await getProduct(id);
+const categories = await getCategories();
+
+if (id !== 'new' && !product) return Astro.redirect('/dashboard');
+
+const value = (key: keyof NonNullable<typeof product>, fallback = '') => product?.[key] ?? fallback;
+const existingPackages: ProductPackage[] = product ? await getProductPackages(product) : [];
+---
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{product ? 'Edit Produk' : 'Tambah Produk Baru'} - TokoSans</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style is:global>
+    :root {
+      --ink: #201630;
+      --muted: #776d83;
+      --v: #7048e8;
+      --v-light: #f1edff;
+      --line: #e8e2f2;
+      --bg: #faf9fd;
+      --surface: #ffffff;
+      --red: #e53e3e;
+      --red-bg: #fff5f5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .layout { display: flex; min-height: 100vh; }
+
+    .main-content { margin-left: 250px; flex: 1; padding: 40px 48px 80px; max-width: 960px; }
+    .back-btn { display: inline-flex; align-items: center; gap: 8px; color: var(--v); font-weight: 700; font-size: .88rem; text-decoration: none; margin-bottom: 24px; transition: transform .15s ease; }
+    .back-btn:hover { transform: translateX(-3px); }
+    .page-head { margin-bottom: 28px; }
+    .page-head h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2rem; font-weight: 800; letter-spacing: -.03em; margin: 0 0 6px; color: var(--ink); }
+    .page-head p { color: var(--muted); margin: 0; font-size: .92rem; }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 32px; box-shadow: 0 4px 24px rgba(112, 72, 232, 0.04); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-weight: 700; font-size: .84rem; color: var(--ink); display: flex; justify-content: space-between; align-items: center; }
+    .hint { color: var(--muted); font-size: .75rem; font-weight: 500; }
+    .field input, .field select, .field textarea { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 16px; font-family: 'DM Sans', sans-serif; font-size: .9rem; color: var(--ink); background: #fbf9fe; outline: none; transition: all .2s ease; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--v); background: #fff; box-shadow: 0 0 0 4px rgba(112, 72, 232, 0.1); }
+    .field textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+    .packages-section { grid-column: 1 / -1; border: 1.5px solid var(--line); border-radius: 14px; padding: 20px; background: #fdfcff; margin-top: 8px; }
+    .packages-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .packages-head h3 { margin: 0; font-size: .95rem; font-weight: 800; color: var(--ink); }
+    /* Package Card Styling (Applied dynamically via JS) */
+    .package-card { background: #ffffff; border: 1.5px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: all .2s ease; }
+    .package-card.inactive { opacity: 0.6; background: #faf9fd; }
+    .pkg-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+    .pkg-card-title { font-size: .8rem; font-weight: 800; text-transform: uppercase; color: var(--v); letter-spacing: .04em; }
+    .pkg-card-body { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .pkg-card-field { display: flex; flex-direction: column; gap: 6px; }
+    .pkg-card-field label { font-size: .75rem; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: .02em; }
+    .pkg-card-field input { border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 14px; font-family: 'DM Sans', sans-serif; font-size: .9rem; color: var(--ink); background: #fbf9fe; outline: none; width: 100%; transition: all .2s ease; }
+    .pkg-card-field input:focus { border-color: var(--v); background: #fff; box-shadow: 0 0 0 3px rgba(112,72,232,.1); }
+    .pkg-card-foot { display: flex; justify-content: flex-end; }
+    .pkg-check-label { display: flex; align-items: center; gap: 8px; font-size: .82rem; font-weight: 700; color: var(--ink); cursor: pointer; user-select: none; }
+    .pkg-check-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--v); cursor: pointer; }
+    .btn-remove-pkg { border: 0; background: var(--red-bg); color: var(--red); padding: 8px 12px; border-radius: 8px; font-weight: 700; font-size: .78rem; cursor: pointer; transition: background .15s ease; }
+    .btn-remove-pkg:hover { background: #fed7d7; }
+    .btn-add-pkg { width: 100%; border: 1.5px dashed var(--v); background: var(--v-light); color: var(--v); padding: 10px; border-radius: 10px; font-weight: 700; font-size: .84rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .15s ease; }
+    .btn-add-pkg:hover { background: #e7dfff; }
+    .form-actions { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 24px; border-top: 1px solid var(--line); }
+    .actions-right { display: flex; gap: 12px; margin-left: auto; }
+    .btn { border: 0; border-radius: 12px; padding: 12px 24px; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: .88rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all .15s ease; }
+    .btn-secondary { background: var(--surface); color: var(--ink); border: 1.5px solid var(--line); }
+    .btn-secondary:hover { background: #f4effa; }
+    .btn-primary { background: var(--v); color: #fff; box-shadow: 0 4px 14px rgba(112, 72, 232, 0.25); }
+    .btn-primary:hover { background: #5c35d4; transform: translateY(-1px); }
+    .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid #feb2b2; }
+    .btn-danger:hover { background: #fed7d7; }
+    .image-upload-box { grid-column: 1 / -1; border: 1.5px dashed var(--line); border-radius: 14px; padding: 20px; background: #fbf9fe; transition: border-color .2s; }
+    .image-upload-box:has(input:focus) { border-color: var(--v); }
+    .image-upload-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .image-preview-wrap { display: none; margin-bottom: 12px; }
+    .image-preview-wrap.has-image { display: block; }
+    .image-preview-wrap img { width: 100%; max-height: 180px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); display: block; }
+    .image-preview-clear { margin-top: 8px; border: 0; background: var(--red-bg); color: var(--red); padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: .78rem; cursor: pointer; }
+    .image-preview-clear:hover { background: #fed7d7; }
+    .image-file-input { width: 100%; border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 14px; font-family: 'DM Sans', sans-serif; font-size: .88rem; color: var(--ink); background: #fff; cursor: pointer; }
+    .image-file-input:focus { border-color: var(--v); outline: none; box-shadow: 0 0 0 4px rgba(112,72,232,.1); }
+    .product-status-box { grid-column: 1 / -1; background: #fbf9fe; border: 1.5px solid var(--line); border-radius: 14px; padding: 16px 20px; }
+    .toggle-status-label { display: flex; align-items: center; gap: 14px; cursor: pointer; user-select: none; }
+    .toggle-status-label input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--v); cursor: pointer; }
+    .status-toggle-info { display: flex; flex-direction: column; gap: 2px; }
+    .status-toggle-info strong { font-size: .9rem; font-weight: 700; color: var(--ink); }
+    .status-toggle-info small { font-size: .8rem; color: var(--muted); }
+    .message-status { grid-column: 1 / -1; font-size: .86rem; font-weight: 600; margin: 8px 0 0; }
+    @media (max-width: 900px) { .layout { flex-direction: column; } .main-content { margin-left: 0; padding: 24px 20px; } .form-grid { grid-template-columns: 1fr; } .package-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+
+<body>
+<ToastProvider client:load />
+<div class="layout">
+  <AdminSidebar active="dashboard" />
+
+  <main class="main-content">
+    <a class="back-btn" href="/dashboard">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+      Kembali ke Dashboard
+    </a>
+
+    <div class="page-head">
+      <h1>{product ? 'Edit Produk' : 'Tambah Produk Baru'}</h1>
+      <p>Atur informasi detail, harga, serta opsi paket produk katalog toko Anda.</p>
+    </div>
+
+    <section class="panel">
+      <form class="form-grid" id="product-form">
+        <div class="field">
+          <label>ID Produk <span class="hint">Huruf kecil & tanda hubung</span></label>
+          <input name="id" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" value={id === 'new' ? '' : id} placeholder="misal: canva-pro" />
+        </div>
+
+        <div class="field">
+          <label>Nama Produk</label>
+          <input name="name" required value={value('name')} placeholder="misal: Canva Pro Premium" />
+        </div>
+
+        <div class="field">
+          <label>Kategori</label>
+          <select name="category" required>
+            {categories.map((cat) => (
+              <option value={cat.name} selected={product?.category === cat.name}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Durasi Default</label>
+          <input name="duration" required value={value('duration')} placeholder="misal: 1 Bulan" />
+        </div>
+
+        <div class="field">
+          <label>Harga Default (Rp)</label>
+          <input name="price" type="number" min="1" required value={product?.price ?? ''} placeholder="misal: 25000" />
+        </div>
+
+        <div class="field">
+          <label>Harga Coret / Original (Rp) <span class="hint">Opsional</span></label>
+          <input name="original_price" type="number" min="1" value={product?.original_price ?? ''} placeholder="misal: 35000" />
+        </div>
+
+        <div class="field">
+          <label>Ikon Fallback <span class="hint">Simbol/Emoji</span></label>
+          <input name="icon" value={value('icon', '✦')} maxlength="4" placeholder="✦" />
+        </div>
+
+        <div class="field full">
+          <label>Badge Produk <span class="hint">Opsional (Terlaris, Diskon)</span></label>
+          <input name="badge" value={value('badge')} placeholder="misal: Terlaris" />
+        </div>
+
+        <div class="field full">
+          <label>Deskripsi Produk</label>
+          <textarea name="description" required placeholder="Tuliskan deskripsi lengkap produk...">{value('description')}</textarea>
+        </div>
+
+        <div class="field full">
+          <label>Syarat &amp; Ketentuan <span class="hint">Tampil setelah pembayaran</span></label>
+          <textarea name="terms" placeholder="Tuliskan petunjuk garansi dan klaim produk...">{value('terms')}</textarea>
+        </div>
+
+        <div class="image-upload-box full">
+          <div class="image-upload-label">
+            <label style="font-weight:700;font-size:.84rem;color:var(--ink);margin:0;">
+              Gambar Produk <span class="hint">Opsional · JPG/PNG/WebP maks 5 MB</span>
+            </label>
+          </div>
+          <div class="image-preview-wrap" id="image-preview-wrap">
+            <img id="image-preview-img" src={product?.image_url || undefined} alt="Preview gambar produk" />
+            <button type="button" class="image-preview-clear" id="image-clear-btn">✕ Hapus gambar</button>
+          </div>
+          <input class="image-file-input" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" id="image-input" />
+        </div>
+
+        <div class="field full product-status-box">
+          <label class="toggle-status-label">
+            <input type="checkbox" name="active" checked={product?.active !== false} />
+            <div class="status-toggle-info">
+              <strong>Produk Aktif & Tampil di Katalog</strong>
+              <small>Jika dinonaktifkan, produk tidak akan muncul di katalog dan tidak bisa di-checkout oleh pembeli.</small>
+            </div>
+          </label>
+        </div>
+
+        <div class="packages-section">
+          <div class="packages-head">
+            <h3>Varian & Opsi Paket Produk</h3>
+            <span class="hint">Tambahkan opsi paket atau variasi durasi jika ada</span>
+          </div>
+          <div id="package-rows"></div>
+          <button type="button" class="btn-add-pkg" id="add-package">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Tambah Opsi Paket Baru
+          </button>
+          <input type="hidden" name="packages" id="packages-input" />
+        </div>
+
+        <div class="form-actions">
+          {product && (
+            <button class="btn btn-danger" type="button" id="delete-product">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              Hapus Produk
+            </button>
+          )}
+          <div class="actions-right">
+            <a class="btn btn-secondary" href="/dashboard">Batal</a>
+            <button class="btn btn-primary" type="submit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Simpan Produk
+            </button>
+          </div>
+        </div>
+
+        <p class="message-status" id="message"></p>
+      </form>
+    </section>
+  </main>
+</div>
+
+<script define:vars={{ initialPackages: existingPackages.map((p) => ({ name: p.name, duration: p.duration, price: p.price, active: p.active })) }}>
+  const packageRows = document.querySelector('#package-rows');
+  const packageInput = document.querySelector('#packages-input');
+  const addBtn = document.querySelector('#add-package');
+
+  function renderRow(data) {
+    const card = document.createElement('div');
+    card.className = 'package-card' + (data.active === false ? ' inactive' : '');
+    card.innerHTML = `
+      <div class="pkg-card-head">
+        <span class="pkg-card-title">Opsi Paket</span>
+        <label class="pkg-check-label">
+          <input type="checkbox" class="pkg-active" ${data.active !== false ? 'checked' : ''} />
+          <span class="pkg-status-text">${data.active !== false ? 'Aktif' : 'Non-aktif'}</span>
+        </label>
+      </div>
+      <div class="pkg-card-body">
+        <div class="pkg-card-field">
+          <label>Nama Paket</label>
+          <input type="text" placeholder="e.g. 1 Bulan Sharing" class="pkg-name" value="${data.name || ''}" />
+        </div>
+        <div class="pkg-card-field">
+          <label>Durasi</label>
+          <input type="text" placeholder="e.g. 30 Hari" class="pkg-duration" value="${data.duration || ''}" />
+        </div>
+        <div class="pkg-card-field">
+          <label>Harga (Rp)</label>
+          <input type="number" placeholder="e.g. 75000" class="pkg-price" min="1" value="${data.price || ''}" />
+        </div>
+      </div>
+      <div class="pkg-card-foot">
+        <button type="button" class="btn-remove-pkg">Hapus Paket</button>
+      </div>
+    `;
+
+    const checkbox = card.querySelector('.pkg-active');
+    const statusText = card.querySelector('.pkg-status-text');
+    checkbox.addEventListener('change', () => {
+      const active = checkbox.checked;
+      statusText.textContent = active ? 'Aktif' : 'Non-aktif';
+      card.classList.toggle('inactive', !active);
+    });
+
+    card.querySelector('.btn-remove-pkg').addEventListener('click', () => card.remove());
+    packageRows.appendChild(card);
+  }
+
+  (initialPackages || []).forEach(renderRow);
+  addBtn.addEventListener('click', () => renderRow({ active: true }));
+</script>
+
+<script>
+  const form = document.querySelector('#product-form') as HTMLFormElement;
+  const message = document.querySelector('#message') as HTMLElement;
+  const notify = (type: string, text: string) => window.dispatchEvent(new CustomEvent('app:toast', { detail: { type, message: text } }));
+
+  // === Image upload preview ===
+  const imageInput = document.querySelector('#image-input') as HTMLInputElement;
+  const previewWrap = document.querySelector('#image-preview-wrap') as HTMLElement;
+  const previewImg = document.querySelector('#image-preview-img') as HTMLImageElement;
+  const clearBtn = document.querySelector('#image-clear-btn') as HTMLButtonElement;
+
+  // Show existing image if any
+  if (previewImg.getAttribute('src')) {
+    previewWrap.classList.add('has-image');
+  }
+
+  imageInput.addEventListener('change', () => {
+    const file = imageInput.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) {
+      notify('error', 'Gambar harus berupa file JPG/PNG/WebP maksimal 5 MB.');
+      imageInput.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewImg.src = e.target?.result as string;
+      previewWrap.classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    imageInput.value = '';
+    previewImg.src = '';
+    previewWrap.classList.remove('has-image');
+  });
+  // === End image upload preview ===
+
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const packageInput = form.querySelector('#packages-input') as HTMLInputElement;
+    const packages = [...form.querySelectorAll('.package-card')].map((row) => ({
+      name: (row.querySelector('.pkg-name') as HTMLInputElement).value.trim(),
+      duration: (row.querySelector('.pkg-duration') as HTMLInputElement).value.trim(),
+      price: Number((row.querySelector('.pkg-price') as HTMLInputElement).value),
+      active: (row.querySelector('.pkg-active') as HTMLInputElement).checked
+    })).filter((item) => item.name && item.duration && item.price > 0);
+
+    if (packageInput) packageInput.value = JSON.stringify(packages);
+
+    const button = form.querySelector('button.btn-primary') as HTMLButtonElement;
+    button.disabled = true;
+    message.style.color = 'var(--v)';
+    message.textContent = 'Menyimpan produk...';
+
+    try {
+      const response = await fetch('/api/admin/products', {
+        method: 'POST',
+        body: new FormData(form)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || 'Gagal menyimpan produk.');
+      
+      notify('success', 'Produk berhasil disimpan.');
+      message.style.color = '#059669';
+      message.textContent = 'Produk berhasil disimpan. Mengalihkan...';
+      setTimeout(() => location.href = '/dashboard', 900);
+    } catch (error) {
+      const text = error instanceof Error ? error.message : 'Gagal menyimpan produk.';
+      notify('error', text);
+      message.style.color = 'var(--red)';
+      message.textContent = text;
+      button.disabled = false;
+    }
+  });
+
+  const deleteBtn = document.querySelector('#delete-product');
+  deleteBtn?.addEventListener('click', async () => {
+    if (!confirm('Hapus produk ini? Semua paket dan stok akun terkait juga akan dihapus.')) return;
+    (deleteBtn as HTMLButtonElement).disabled = true;
+    try {
+      const response = await fetch('/api/admin/products', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: (form.querySelector('[name="id"]') as HTMLInputElement).value })
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Gagal menghapus produk.');
+      }
+      notify('success', 'Produk berhasil dihapus.');
+      setTimeout(() => location.href = '/dashboard', 900);
+    } catch (error) {
+      notify('error', error instanceof Error ? error.message : 'Gagal menghapus produk.');
+      (deleteBtn as HTMLButtonElement).disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>

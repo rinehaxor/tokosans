@@ -1,0 +1,28 @@
+---
+import { getPostById } from '../../../lib/blog';
+import ToastProvider from '../../../components/ToastProvider';
+import AdminSidebar from '../../../components/AdminSidebar.astro';
+import BlogEditor from '../../../components/BlogEditor';
+
+const { id } = Astro.params;
+const post = id ? await getPostById(id) : null;
+if (!post) return Astro.redirect('/dashboard/blog');
+const editorPost = { id: post.id, slug: post.slug, title: post.title, excerpt: post.excerpt, content: post.content, cover_url: post.cover_url || '', status: post.status };
+---
+<ToastProvider client:load />
+<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Edit: {post.title} - Admin Dashboard</title>
+<style is:global>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+:root{--ink:#191026;--muted:#6b6178;--v:#7048e8;--v2:#5c35d4;--l:#f3edff;--line:#eae3f5;--bg:#faf8fe;--surface:#fff;--green:#059669;--green-bg:#ecfdf5;--red:#ef4444;--red-bg:#fef2f2}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:-.03em}
+.layout{display:flex;min-height:100vh}.content{flex:1;margin-left:250px;padding:40px 48px 80px;max-width:900px}
+.page-head{margin-bottom:32px}.page-head h1{margin:0 0 6px;font-size:1.6rem;font-weight:800}.page-head p{margin:0;color:var(--muted);font-size:.95rem}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 4px 24px rgba(112,72,232,.04);padding:28px}
+.field{display:flex;flex-direction:column;gap:6px}.field-label{font-weight:700;font-size:.85rem}
+@media(max-width:900px){.content{margin-left:0;padding:24px 20px}}
+</style></head>
+<body><div class="layout"><AdminSidebar active="blog" /><main class="content">
+<div class="page-head"><h1>Edit Artikel</h1><p>Perbarui konten artikel blog</p></div>
+<div class="panel"><BlogEditor post={editorPost} isNew={false} client:load /></div>
+</main></div></body></html>

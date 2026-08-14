@@ -1,0 +1,145 @@
+---
+import { getProducts } from '../../../lib/products';
+import { getProductPackages } from '../../../lib/packages';
+import { getSupabaseAdmin } from '../../../lib/supabase';
+import ToastProvider from '../../../components/ToastProvider';
+import AdminSidebar from '../../../components/AdminSidebar.astro';
+
+const managedProducts = await getProducts();
+const packageMap = Object.fromEntries(await Promise.all(managedProducts.map(async (product) => [product.id, await getProductPackages(product)])));
+
+const id = Astro.params.id;
+let account: { id: string; product_id: string; package_id: string | null; login: string; password: string; status: string } | null = null;
+try {
+  const { data } = await getSupabaseAdmin().from('account_inventory').select('id,product_id,package_id,login,password,status').eq('id', id).maybeSingle();
+  account = data;
+} catch (error) { console.error('Account edit error:', error); }
+if (!account) return Astro.redirect('/dashboard/accounts');
+---
+
+<ToastProvider client:load />
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Stok Akun - Admin Dashboard - TokoSans</title>
+  <style is:global>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+    :root { --ink: #191026; --muted: #6b6178; --v: #7048e8; --v2: #5c35d4; --l: #f3edff; --line: #eae3f5; --bg: #faf8fe; --surface: #ffffff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+    h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -.03em; }
+    .layout { display: flex; min-height: 100vh; }
+    .main-content { margin-left: 250px; flex: 1; padding: 36px 40px 60px; max-width: 760px; }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--v); text-decoration: none; font-weight: 700; font-size: .85rem; margin-bottom: 20px; }
+    .header-bar { margin-bottom: 28px; }
+    .header-bar h1 { margin: 0; font-size: 2rem; font-weight: 800; }
+    .header-bar p { margin: 4px 0 0; color: var(--muted); font-size: .92rem; }
+    .form-card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 32px; box-shadow: 0 4px 24px rgba(112, 72, 232, .04); }
+    .form-grid { display: grid; gap: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group label { font-weight: 700; font-size: .84rem; color: var(--ink); }
+    .form-group input, .form-group select { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-size: .9rem; font-weight: 500; font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface); outline: none; transition: border-color .15s; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--v); box-shadow: 0 0 0 3px rgba(112, 72, 232, .12); }
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; padding-top: 20px; border-top: 1px solid var(--line); }
+    .btn-secondary { padding: 11px 20px; border-radius: 12px; font-weight: 700; font-size: .88rem; color: var(--muted); border: 1px solid var(--line); background: var(--surface); text-decoration: none; display: inline-flex; align-items: center; transition: all .15s ease; }
+    .btn-secondary:hover { background: #f5f0fb; color: var(--ink); }
+    .btn-primary { padding: 11px 22px; border-radius: 12px; font-weight: 700; font-size: .88rem; color: #fff; border: 0; background: var(--v); cursor: pointer; transition: all .15s ease; box-shadow: 0 4px 16px rgba(112, 72, 232, .25); }
+    .btn-primary:hover { background: var(--v2); }
+    @media (max-width: 900px) {
+      .sidebar { position: static; width: 100%; height: auto; }
+      .layout { flex-direction: column; }
+      .main-content { margin-left: 0; padding: 24px 20px; }
+    }
+    .form-group input, .form-group select { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font: 500 .9rem 'DM Sans', sans-serif; color: var(--ink); background: var(--surface); outline: none; }
+    .form-group input:focus, .form-group select:focus { border-color: var(--v); box-shadow: 0 0 0 3px rgba(112, 72, 232, .12); }
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px; padding-top: 20px; border-top: 1px solid var(--line); }
+    .btn-secondary { padding: 11px 20px; border-radius: 12px; font-weight: 700; font-size: .88rem; color: var(--muted); text-decoration: none; border: 1px solid var(--line); background: var(--surface); }
+    .btn-primary { padding: 11px 24px; border-radius: 12px; font-weight: 700; font-size: .88rem; color: #fff; background: var(--v); border: 0; cursor: pointer; }
+    @media (max-width: 900px) { .layout { flex-direction: column; } .main-content { margin-left: 0; padding: 24px 20px; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <AdminSidebar active="accounts" />
+
+  <main class="main-content">
+    <a class="back-link" href="/dashboard/accounts">← Kembali ke Daftar Akun</a>
+
+    <div class="header-bar">
+      <h1>Edit Stok Akun</h1>
+      <p>Perbarui credential akun yang tersimpan.</p>
+    </div>
+
+    <div class="form-card">
+      <form class="form-grid" id="edit-account" data-account-id={id}>
+        <div class="form-group">
+          <label>Pilih Produk</label>
+          <select name="productId" required>
+            {managedProducts.map((product) => <option value={product.id} selected={product.id === account?.product_id}>{product.name}</option>)}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Pilih Paket</label>
+          <select name="packageId" id="packageId" required>
+            <option value="">Pilih paket</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Email / Username / Login Akun</label>
+          <input name="login" required value={account.login}/>
+        </div>
+
+        <div class="form-group">
+          <label>Password / License Key / Akses Akun</label>
+          <input name="password" required value={account.password}/>
+        </div>
+
+        <div class="form-actions">
+          <a class="btn-secondary" href="/dashboard/accounts">Batal</a>
+          <button class="btn-primary" type="submit">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+
+<script define:vars={{ packageMap, selectedPackageId: account.package_id ?? account.product_id }}>
+  const productSelect = document.querySelector('select[name="productId"]');
+  const packageSelect = document.querySelector('#packageId');
+  const loadPackages = () => {
+    packageSelect.innerHTML = '<option value="">Pilih paket</option>';
+    (packageMap[productSelect.value] ?? []).forEach((item) => {
+      packageSelect.insertAdjacentHTML('beforeend', `<option value="${item.id}" ${item.id === selectedPackageId ? 'selected' : ''}>${item.name} • ${item.duration}</option>`);
+    });
+  };
+  productSelect?.addEventListener('change', loadPackages);
+  loadPackages();
+</script>
+
+<script>
+  const form = document.querySelector('#edit-account');
+  const notify = (type, message) => window.dispatchEvent(new CustomEvent('app:toast', { detail: { type, message } }));
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const button = form.querySelector('button');
+    if (button) button.disabled = true;
+    try {
+      const response = await fetch('/api/admin/accounts', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: form.dataset.accountId, ...Object.fromEntries(new FormData(form)) })
+      });
+      if (!response.ok) throw new Error('request');
+      notify('success', 'Akun berhasil diperbarui.');
+      setTimeout(() => location.href = '/dashboard/accounts', 800);
+    } catch {
+      notify('error', 'Gagal memperbarui akun.');
+      if (button) button.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+---
+import { getProducts } from '../../lib/products';
+import ToastProvider from '../../components/ToastProvider';
+import AdminSidebar from '../../components/AdminSidebar.astro';
+const products = await getProducts();
+const activeProducts = products.filter(p => p.active !== false);
+---
+<ToastProvider client:load />
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tools - Admin Dashboard - TokoSans</title>
+  <style is:global>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+    :root{--ink:#191026;--muted:#6b6178;--v:#7048e8;--v2:#5c35d4;--l:#f3edff;--line:#eae3f5;--bg:#faf8fe;--surface:#fff;--green:#059669;--green-bg:#ecfdf5;--red:#ef4444;--red-bg:#fef2f2}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+    h1,h2,h3,h4{font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:-.03em}
+    .layout{display:flex;min-height:100vh}
+    .content{flex:1;margin-left:250px;padding:40px 48px 80px;max-width:900px}
+    .page-head{margin-bottom:32px}.page-head h1{margin:0 0 6px;font-size:2rem;font-weight:800}.page-head p{margin:0;color:var(--muted);font-size:.95rem}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 4px 24px rgba(112,72,232,.04);padding:28px;margin-bottom:24px}
+    .card-title{display:flex;align-items:center;gap:10px;margin:0 0 6px;font-size:1.15rem;font-weight:800}
+    .card-desc{color:var(--muted);font-size:.88rem;margin:0 0 22px}
+    .form-grid{display:grid;gap:16px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field-label{font-weight:700;font-size:.85rem}
+    .field-hint{font-size:.75rem;font-weight:500;color:var(--muted)}
+    .field select,.field input[type="number"]{border:1px solid var(--line);border-radius:10px;padding:11px 14px;font:500 .88rem 'DM Sans',sans-serif;color:var(--ink);background:var(--surface);width:100%}
+    .btn-inject{padding:13px 24px;background:var(--green);color:#fff;border:0;border-radius:12px;font:700 .92rem 'DM Sans',sans-serif;cursor:pointer;transition:all .15s ease}
+    .btn-inject:hover{background:#047857;transform:translateY(-1px)}.btn-inject:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .btn-danger{padding:11px 20px;background:var(--red-bg);color:var(--red);border:1px solid #fca5a5;border-radius:10px;font:700 .85rem 'DM Sans',sans-serif;cursor:pointer;transition:all .15s ease}
+    .btn-danger:hover{background:#fee2e2}.btn-danger:disabled{opacity:.6;cursor:not-allowed}
+    .msg{margin:14px 0 0;font-size:.86rem;font-weight:600;min-height:22px}
+    .stats-box{font-size:.88rem;color:var(--muted);padding:14px 18px;background:#faf8fe;border:1px solid var(--line);border-radius:12px;margin-bottom:16px}
+    .stats-box strong{color:var(--ink)}
+    .divider{border:none;border-top:1px solid var(--line);margin:24px 0}
+    code{background:var(--l);padding:2px 7px;border-radius:6px;font-size:.82rem;font-weight:600;color:var(--v)}
+    @media(max-width:900px){.content{margin-left:0;padding:24px 20px}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <AdminSidebar active="tools" />
+  <main class="content">
+    <div class="page-head">
+      <h1>Tools</h1>
+      <p>Utilitas admin untuk mengelola data toko</p>
+    </div>
+    <div class="card">
+      <h2 class="card-title">Inject Penjualan</h2>
+      <p class="card-desc">Buat data penjualan dummy agar label "Terjual" di katalog terlihat ramai. Data dummy menggunakan email <code>dummy@tokosans.local</code> sehingga mudah dibedakan dari transaksi asli.</p>
+      <div class="form-grid">
+        <div class="field">
+          <span class="field-label">Produk</span>
+          <select id="inject-product">
+            <option value="">Semua Produk Aktif ({activeProducts.length} produk)</option>
+            {activeProducts.map(p => <option value={p.id}>{p.name}</option>)}
+          </select>
+        </div>
+        <div class="field">
+          <span class="field-label">Jumlah Order per Produk</span>
+          <input type="number" id="inject-count" value="800" min="1" max="2000" />
+          <span class="field-hint">Min 1 - Max 2.000 per produk. Tiap order = 1 unit terjual.</span>
+        </div>
+      </div>
+      <div style="margin-top:18px"><button type="button" id="inject-btn" class="btn-inject">Inject Sekarang</button></div>
+      <p class="msg" id="inject-message"></p>
+      <hr class="divider"/>
+      <h3 style="margin:0 0 8px;font-size:.95rem">Info &amp; Cleanup</h3>
+      <div class="stats-box" id="inject-stats">Memuat statistik...</div>
+      <button type="button" id="inject-cleanup-btn" class="btn-danger">Hapus Semua Data Dummy</button>
+      <p style="margin:10px 0 0;font-size:.78rem;color:var(--muted)">Hanya menghapus order dengan email <code>dummy@tokosans.local</code>. Data pelanggan asli tidak terpengaruh.</p>
+    </div>
+  </main>
+<script>
+const notify = (t: string, m: string) => window.dispatchEvent(new CustomEvent('app:toast', { detail: { type: t, message: m } }));
+const injectBtn = document.getElementById('inject-btn') as HTMLButtonElement;
+const cleanupBtn = document.getElementById('inject-cleanup-btn') as HTMLButtonElement;
+const productSel = document.getElementById('inject-product') as HTMLSelectElement;
+const countIn = document.getElementById('inject-count') as HTMLInputElement;
+const msg = document.getElementById('inject-message') as HTMLElement;
+const statsEl = document.getElementById('inject-stats') as HTMLElement;
+
+async function loadStats() {
+  try {
+    const r = await fetch('/api/admin/inject-sales');
+    const d = await r.json();
+    if (r.ok) {
+      const t = d.total_dummy_orders || 0;
+      statsEl.innerHTML = t > 0 ? `<strong>${t.toLocaleString('id-ID')}</strong> order dummy saat ini ada di database.` : 'Belum ada data dummy di database.';
+    } else statsEl.textContent = 'Gagal memuat statistik.';
+  } catch { statsEl.textContent = 'Error koneksi.'; }
+}
+loadStats();
+
+injectBtn?.addEventListener('click', async () => {
+  const pid = productSel.value;
+  const count = parseInt(countIn.value) || 800;
+  const label = pid ? productSel.options[productSel.selectedIndex].text : 'semua produk aktif';
+  if (!confirm(`Inject ${count.toLocaleString('id-ID')} order dummy untuk ${label}?`)) return;
+  injectBtn.disabled = true; injectBtn.textContent = 'Memproses...';
+  msg.textContent = ''; msg.style.color = '';
+  try {
+    const r = await fetch('/api/admin/inject-sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ product_id: pid || undefined, count }) });
+    const d = await r.json();
+    if (r.ok) { msg.style.color = 'var(--green)'; msg.textContent = d.message; notify('success', d.message); loadStats(); }
+    else { msg.style.color = 'var(--red)'; msg.textContent = d.message; notify('error', d.message); }
+  } catch { msg.style.color = 'var(--red)'; msg.textContent = 'Error koneksi ke server.'; }
+  injectBtn.disabled = false; injectBtn.textContent = 'Inject Sekarang';
+});
+
+cleanupBtn?.addEventListener('click', async () => {
+  if (!confirm('Yakin hapus SEMUA data penjualan dummy?\nData pelanggan asli tidak terpengaruh.')) return;
+  cleanupBtn.disabled = true; cleanupBtn.textContent = 'Menghapus...';
+  try {
+    const r = await fetch('/api/admin/inject-sales', { method: 'DELETE' });
+    const d = await r.json();
+    if (r.ok) { notify('success', d.message); msg.style.color = 'var(--green)'; msg.textContent = d.message; loadStats(); }
+    else { notify('error', d.message); msg.style.color = 'var(--red)'; msg.textContent = d.message; }
+  } catch { msg.style.color = 'var(--red)'; msg.textContent = 'Error koneksi ke server.'; }
+  cleanupBtn.disabled = false; cleanupBtn.textContent = 'Hapus Semua Data Dummy';
+});
+</script>
+
+</div>
+</body></html>
