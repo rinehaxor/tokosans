@@ -91,6 +91,7 @@ create table if not exists blog_posts (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
   title text not null,
+  category text not null default 'Umum',
   excerpt text not null default '',
   content text not null default '',
   cover_url text,
@@ -99,4 +100,5 @@ create table if not exists blog_posts (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+alter table blog_posts add column if not exists category text not null default 'Umum';
 create index if not exists blog_posts_status_published_idx on blog_posts(status, published_at desc);

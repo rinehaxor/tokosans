@@ -8,7 +8,7 @@ export const GET: APIRoute = async () => {
   try {
     const { data, error } = await getSupabaseAdmin()
       .from('blog_posts')
-      .select('id,slug,title,excerpt,cover_url,status,published_at,created_at,updated_at')
+      .select('id,slug,title,category,excerpt,cover_url,status,published_at,created_at,updated_at')
       .order('created_at', { ascending: false });
     if (error) throw error;
     return Response.json({ posts: data ?? [] });
@@ -22,6 +22,7 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json() as Record<string, unknown>;
     const title = str(body.title);
+    const category = str(body.category) || 'Umum';
     const content = str(body.content);
     const excerpt = str(body.excerpt);
     const cover_url = str(body.cover_url) || null;
@@ -37,8 +38,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     const { data, error } = await getSupabaseAdmin()
       .from('blog_posts')
-      .insert({ slug, title, excerpt, content, cover_url, status, published_at })
-      .select('id,slug,title,status')
+      .insert({ slug, title, category, excerpt, content, cover_url, status, published_at })
+      .select('id,slug,title,category,status')
       .single();
 
     if (error) {
@@ -60,6 +61,7 @@ export const PATCH: APIRoute = async ({ request }) => {
     if (!id) return Response.json({ message: 'ID artikel wajib diisi.' }, { status: 400 });
 
     const title = str(body.title);
+    const category = str(body.category) || 'Umum';
     const content = str(body.content);
     const excerpt = str(body.excerpt);
     const cover_url = str(body.cover_url) || null;
@@ -81,9 +83,9 @@ export const PATCH: APIRoute = async ({ request }) => {
 
     const { data, error } = await db
       .from('blog_posts')
-      .update({ slug, title, excerpt, content, cover_url, status, published_at, updated_at: new Date().toISOString() })
+      .update({ slug, title, category, excerpt, content, cover_url, status, published_at, updated_at: new Date().toISOString() })
       .eq('id', id)
-      .select('id,slug,title,status')
+      .select('id,slug,title,category,status')
       .single();
 
     if (error) {

@@ -1,10 +1,14 @@
 ---
 import { getPublishedPosts, formatBlogDate, estimateReadTime } from '../../lib/blog';
 import RecentSalesToast from '../../components/RecentSalesToast.astro';
+import Footer from '../../components/Footer.astro';
+
 let posts: Awaited<ReturnType<typeof getPublishedPosts>> = [];
 try { posts = await getPublishedPosts(); } catch {}
+
+const categories = Array.from(new Set(posts.map(p => p.category || 'Umum')));
 ---
-<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content="Blog tokosans. — Tips, panduan, dan info terbaru seputar layanan digital."/><title>Blog — tokosans.</title>
+<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content="Blog tokosans. — Tips, panduan, dan info terbaru seputar layanan digital."/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/><link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png"/><title>Blog — tokosans.</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 :root{--ink:#201630;--muted:#746a80;--v:#7048e8;--l:#f0ecff;--line:#e8e2f2;--bg:#fdfcff}
@@ -13,16 +17,22 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 .shell{max-width:1180px;margin:auto;padding:0 28px}
 .site-header{position:sticky;top:0;z-index:1000;background:rgba(253,252,255,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .nav{height:76px;display:flex;align-items:center;justify-content:space-between}
-.logo{font:800 1.55rem 'Plus Jakarta Sans';letter-spacing:-1.5px;color:var(--ink);text-decoration:none}.logo b{color:var(--v)}
+.logo{display:flex;align-items:center;gap:10px;font:800 1.55rem 'Plus Jakarta Sans';letter-spacing:-1.5px;color:var(--ink);text-decoration:none}.logo b{color:var(--v)}
+.logo-img{width:32px;height:32px;border-radius:8px;object-fit:contain}
 .nav-links{display:flex;align-items:center;gap:27px}.nav-links a{color:#5f566a;font-size:.9rem;font-weight:700;text-decoration:none}
 .nav-cta{padding:11px 16px;background:var(--ink);color:#fff!important;display:inline-flex;align-items:center;border-radius:12px;text-decoration:none;font-weight:700}
-.hero-blog{padding:64px 0 40px;text-align:center}.hero-blog h1{font-size:clamp(2.2rem,4vw,3.4rem);margin:0 0 12px}
+.hero-blog{padding:64px 0 24px;text-align:center}.hero-blog h1{font-size:clamp(2.2rem,4vw,3.4rem);margin:0 0 12px}
 .hero-blog p{color:var(--muted);font-size:1.05rem;max-width:560px;margin:0 auto}
+.cat-filters{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:24px 0 40px}
+.cat-btn{padding:8px 18px;border-radius:99px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s}
+.cat-btn:hover{background:var(--l);color:var(--v);border-color:#d4c8f5}
+.cat-btn.active{background:var(--v);color:#fff;border-color:var(--v);box-shadow:0 4px 14px rgba(112,72,232,.2)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px;padding:0 0 80px}
 .post-card{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;text-decoration:none;color:var(--ink);transition:all .2s;display:flex;flex-direction:column}
 .post-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(112,72,232,.1);border-color:#d4c8f5}
 .post-cover{width:100%;height:200px;object-fit:cover;background:#f0ecff}
 .post-body{padding:24px;flex:1;display:flex;flex-direction:column}
+.post-badge{display:inline-block;align-self:flex-start;padding:3px 10px;background:var(--l);color:var(--v);border-radius:99px;font-size:.74rem;font-weight:700;margin-bottom:10px}
 .post-body h2{font-size:1.2rem;margin:0 0 8px;line-height:1.35;letter-spacing:-.02em}
 .post-body p{color:var(--muted);font-size:.88rem;line-height:1.6;margin:0 0 16px;flex:1}
 .post-meta{display:flex;align-items:center;gap:12px;font-size:.78rem;color:var(--muted);font-weight:600}
@@ -31,15 +41,26 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 .footer{padding:40px 0;text-align:center;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
 @media(max-width:600px){.grid{grid-template-columns:1fr}.nav-links{gap:16px}}
 </style></head><body>
-<header class="site-header"><div class="shell"><nav class="nav"><a class="logo" href="/">tokosans<b>.</b></a><div class="nav-links"><a href="/#produk">Produk</a><a href="/blog" style="color:var(--v)">Blog</a><a href="/#faq">FAQ</a><a class="nav-cta" href="/#produk">Belanja</a></div></nav></div></header>
+<header class="site-header"><div class="shell"><nav class="nav"><a class="logo" href="/"><img src="/favicon.svg" alt="logo" class="logo-img" /><span>tokosans<b>.</b></span></a><div class="nav-links"><a href="/#produk">Produk</a><a href="/blog" style="color:var(--v)">Blog</a><a href="/#faq">FAQ</a><a class="nav-cta" href="/#produk">Belanja</a></div></nav></div></header>
 <div class="shell"><div class="hero-blog"><h1>Blog</h1><p>Tips, panduan, dan info terbaru seputar layanan digital premium.</p></div>
+
+{categories.length > 0 && (
+  <div class="cat-filters" id="cat-filters">
+    <button class="cat-btn active" data-cat="all">Semua</button>
+    {categories.map((c) => (
+      <button class="cat-btn" data-cat={c}>{c}</button>
+    ))}
+  </div>
+)}
+
 {posts.length === 0 ? (
 <div class="empty-blog"><h2>Belum ada artikel</h2><p>Nantikan konten menarik dari kami segera.</p></div>
 ) : (
-<div class="grid">{posts.map((post) => (
-<a href={`/blog/${post.slug}`} class="post-card">
+<div class="grid" id="posts-grid">{posts.map((post) => (
+<a href={`/blog/${post.slug}`} class="post-card" data-category={post.category || 'Umum'}>
 {post.cover_url && <img class="post-cover" src={post.cover_url} alt={post.title} loading="lazy"/>}
 <div class="post-body">
+<span class="post-badge">{post.category || 'Umum'}</span>
 <h2>{post.title}</h2>
 <p>{post.excerpt || post.content.replace(/<[^>]*>/g,'').substring(0,150) + '...'}</p>
 <div class="post-meta"><span>{formatBlogDate(post.published_at!)}</span><span>·</span><span>{estimateReadTime(post.content)} mnt baca</span></div>
@@ -48,6 +69,26 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 ))}</div>
 )}
 </div>
-<footer class="footer"><div class="shell">© 2026 tokosans. Seluruh hak cipta dilindungi.</div></footer>
+<Footer />
 <RecentSalesToast />
+<script>
+  const buttons = document.querySelectorAll('#cat-filters .cat-btn');
+  const cards = document.querySelectorAll<HTMLElement>('#posts-grid .post-card');
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const selectedCat = btn.getAttribute('data-cat');
+      cards.forEach(card => {
+        if (selectedCat === 'all' || card.getAttribute('data-category') === selectedCat) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
 </body></html>

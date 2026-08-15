@@ -1,6 +1,8 @@
 ---
 import { getPostBySlug, formatBlogDate, estimateReadTime } from '../../lib/blog';
 import RecentSalesToast from '../../components/RecentSalesToast.astro';
+import Footer from '../../components/Footer.astro';
+
 
 const { slug } = Astro.params;
 const post = slug ? await getPostBySlug(slug) : null;
@@ -23,11 +25,13 @@ function md2html(md: string): string {
   h = h.replace(/\n\n/g, '</p><p>');
   return '<p>' + h + '</p>';
 }
-const htmlContent = md2html(post.content);
+const isHtml = /^\s*<[a-z0-9]+/i.test(post.content.trim());
+const htmlContent = isHtml ? post.content : md2html(post.content);
 const readTime = estimateReadTime(post.content);
+
 ---
 
-<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content={post.excerpt || post.title}/><title>{post.title} — tokosans.</title>
+<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content={post.excerpt || post.title}/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/><link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png"/><title>{post.title} — tokosans.</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 :root{--ink:#201630;--muted:#746a80;--v:#7048e8;--l:#f0ecff;--line:#e8e2f2;--bg:#fdfcff}
@@ -36,7 +40,8 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 .shell{max-width:1180px;margin:auto;padding:0 28px}
 .site-header{position:sticky;top:0;z-index:1000;background:rgba(253,252,255,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .nav{height:76px;display:flex;align-items:center;justify-content:space-between}
-.logo{font:800 1.55rem 'Plus Jakarta Sans';letter-spacing:-1.5px;color:var(--ink);text-decoration:none}.logo b{color:var(--v)}
+.logo{display:flex;align-items:center;gap:10px;font:800 1.55rem 'Plus Jakarta Sans';letter-spacing:-1.5px;color:var(--ink);text-decoration:none}.logo b{color:var(--v)}
+.logo-img{width:32px;height:32px;border-radius:8px;object-fit:contain}
 .nav-links{display:flex;align-items:center;gap:27px}.nav-links a{color:#5f566a;font-size:.9rem;font-weight:700;text-decoration:none}
 .nav-cta{padding:11px 16px;background:var(--ink);color:#fff!important;display:inline-flex;align-items:center;border-radius:12px;text-decoration:none;font-weight:700}
 .article-header{max-width:760px;margin:60px auto 0;text-align:center}
@@ -61,7 +66,7 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 .footer{padding:40px 0;text-align:center;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
 @media(max-width:600px){.nav-links{gap:16px}.article-header{margin-top:40px}}
 </style></head><body>
-<header class="site-header"><div class="shell"><nav class="nav"><a class="logo" href="/">tokosans<b>.</b></a><div class="nav-links"><a href="/#produk">Produk</a><a href="/blog" style="color:var(--v)">Blog</a><a href="/#faq">FAQ</a><a class="nav-cta" href="/#produk">Belanja</a></div></nav></div></header>
+<header class="site-header"><div class="shell"><nav class="nav"><a class="logo" href="/"><img src="/favicon.svg" alt="logo" class="logo-img" /><span>tokosans<b>.</b></span></a><div class="nav-links"><a href="/#produk">Produk</a><a href="/blog" style="color:var(--v)">Blog</a><a href="/#faq">FAQ</a><a class="nav-cta" href="/#produk">Belanja</a></div></nav></div></header>
 <div class="shell">
 <div class="article-header">
 <a href="/blog" class="back-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Kembali ke Blog</a>
@@ -71,6 +76,6 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 {post.cover_url && <div class="article-cover"><img src={post.cover_url} alt={post.title}/></div>}
 <article class="article-content" set:html={htmlContent}/>
 </div>
-<footer class="footer"><div class="shell">© 2026 tokosans. Seluruh hak cipta dilindungi.</div></footer>
+<Footer />
 <RecentSalesToast />
 </body></html>

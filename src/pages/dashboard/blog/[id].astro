@@ -6,8 +6,9 @@ import BlogEditor from '../../../components/BlogEditor';
 
 const { id } = Astro.params;
 const post = id ? await getPostById(id) : null;
+
 if (!post) return Astro.redirect('/dashboard/blog');
-const editorPost = { id: post.id, slug: post.slug, title: post.title, excerpt: post.excerpt, content: post.content, cover_url: post.cover_url || '', status: post.status };
+const editorPost = { id: post.id, slug: post.slug, title: post.title, category: post.category, excerpt: post.excerpt, content: post.content, cover_url: post.cover_url || '', status: post.status };
 ---
 <ToastProvider client:load />
 <html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Edit: {post.title} - Admin Dashboard</title>

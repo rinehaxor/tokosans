@@ -4,6 +4,7 @@ export type BlogPost = {
   id: string;
   slug: string;
   title: string;
+  category: string;
   excerpt: string;
   content: string;
   cover_url: string | null;
@@ -17,44 +18,44 @@ export async function getPublishedPosts(): Promise<BlogPost[]> {
   const db = getSupabaseAdmin();
   const { data, error } = await db
     .from('blog_posts')
-    .select('id,slug,title,excerpt,content,cover_url,status,published_at,created_at,updated_at')
+    .select('id,slug,title,category,excerpt,content,cover_url,status,published_at,created_at,updated_at')
     .eq('status', 'published')
     .not('published_at', 'is', null)
     .order('published_at', { ascending: false });
   if (error) throw error;
-  return (data ?? []) as BlogPost[];
+  return (data ?? []).map(p => ({ ...p, category: p.category || 'Umum' })) as BlogPost[];
 }
 
 export async function getAllPosts(): Promise<BlogPost[]> {
   const db = getSupabaseAdmin();
   const { data, error } = await db
     .from('blog_posts')
-    .select('id,slug,title,excerpt,content,cover_url,status,published_at,created_at,updated_at')
+    .select('id,slug,title,category,excerpt,content,cover_url,status,published_at,created_at,updated_at')
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return (data ?? []) as BlogPost[];
+  return (data ?? []).map(p => ({ ...p, category: p.category || 'Umum' })) as BlogPost[];
 }
 
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   const db = getSupabaseAdmin();
   const { data, error } = await db
     .from('blog_posts')
-    .select('id,slug,title,excerpt,content,cover_url,status,published_at,created_at,updated_at')
+    .select('id,slug,title,category,excerpt,content,cover_url,status,published_at,created_at,updated_at')
     .eq('slug', slug)
     .single();
   if (error) return null;
-  return data as BlogPost;
+  return { ...data, category: data.category || 'Umum' } as BlogPost;
 }
 
 export async function getPostById(id: string): Promise<BlogPost | null> {
   const db = getSupabaseAdmin();
   const { data, error } = await db
     .from('blog_posts')
-    .select('id,slug,title,excerpt,content,cover_url,status,published_at,created_at,updated_at')
+    .select('id,slug,title,category,excerpt,content,cover_url,status,published_at,created_at,updated_at')
     .eq('id', id)
     .single();
   if (error) return null;
-  return data as BlogPost;
+  return { ...data, category: data.category || 'Umum' } as BlogPost;
 }
 
 export function generateSlug(title: string): string {

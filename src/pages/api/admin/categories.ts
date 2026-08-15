@@ -39,6 +39,7 @@ export const PATCH: APIRoute = async ({ request }) => {
     if (error) return Response.json({ message: error.code === '23505' ? 'Kategori sudah ada.' : 'Gagal mengubah kategori.' }, { status: error.code === '23505' ? 409 : 500 });
     const { error: productsError } = await db.from('products').update({ category: name, updated_at: new Date().toISOString() }).eq('category', old.name);
     if (productsError) throw productsError;
+    await db.from('blog_posts').update({ category: name, updated_at: new Date().toISOString() }).eq('category', old.name);
     return Response.json({ category: data });
   } catch { return Response.json({ message: 'Gagal mengubah kategori.' }, { status: 500 }); }
 };
@@ -50,8 +51,10 @@ export const DELETE: APIRoute = async ({ request }) => {
     const db = getSupabaseAdmin();
     const { data: category } = await db.from('categories').select('name').eq('id', id).single();
     if (!category) return Response.json({ message: 'Kategori tidak ditemukan.' }, { status: 404 });
-    const { count } = await db.from('products').select('id', { count: 'exact', head: true }).eq('category', category.name);
-    if ((count ?? 0) > 0) return Response.json({ message: 'Kategori masih dipakai produk dan tidak dapat dihapus.' }, { status: 409 });
+    const { count: productCount } = await db.from('products').select('id', { count: 'exact', head: true }).eq('category', category.name);
+    if ((productCount ?? 0) > 0) return Response.json({ message: 'Kategori masih dipakai produk dan tidak dapat dihapus.' }, { status: 409 });
+    const { count: blogCount } = await db.from('blog_posts').select('id', { count: 'exact', head: true }).eq('category', category.name);
+    if ((blogCount ?? 0) > 0) return Response.json({ message: 'Kategori masih dipakai artikel blog dan tidak dapat dihapus.' }, { status: 409 });
     const { error } = await db.from('categories').delete().eq('id', id);
     if (error) throw error;
     return Response.json({ ok: true });

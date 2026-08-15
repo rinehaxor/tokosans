@@ -1,4 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Component } from 'react';
+
+class ErrorBoundary extends Component<{children: React.ReactNode}, {hasError: boolean; error: string}> {
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.state = { hasError: false, error: '' };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{padding:'24px',background:'#fef2f2',border:'1px solid #fca5a5',borderRadius:'12px',color:'#ef4444',fontWeight:600}}>
+          Gagal memuat tabel akun: {this.state.error}
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export type AccountItem = {
   id: string;
@@ -23,6 +43,14 @@ interface AccountsTableProps {
 }
 
 export default function AccountsTable(props: AccountsTableProps) {
+  return (
+    <ErrorBoundary>
+      <AccountsTableInner {...props} />
+    </ErrorBoundary>
+  );
+}
+
+function AccountsTableInner(props: AccountsTableProps) {
   const { accounts: initialAccounts, products } = props;
   const [accounts, setAccounts] = useState<AccountItem[]>(initialAccounts);
   const [search, setSearch] = useState('');
