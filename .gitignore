@@ -20,5 +20,8 @@ pnpm-debug.log*
 # macOS-specific files
 .DS_Store
 
+# WhatsApp Baileys session (admin WA login state)
+wa-auth/
+
 # jetbrains setting folder
 .idea/

@@ -1,0 +1,90 @@
+---
+import Legal from '../layouts/Legal.astro';
+
+type Section = { id: string; title: string; body: string };
+
+const sections: Section[] = [
+  {
+    id: 'ringkasan',
+    title: '1. Ringkasan',
+    body: `<p>Privasi Anda penting bagi kami. Kebijakan Privasi ini menjelaskan data apa yang kami kumpulkan saat Anda menggunakan situs <strong>tokosans.</strong>, bagaimana data tersebut digunakan, serta langkah yang kami ambil untuk menjaga keamanannya.</p>
+<p>Dengan menggunakan situs kami, Anda menyetujui praktik yang dijelaskan dalam kebijakan ini. Kebijakan ini berlaku bersama <a href="/syarat-ketentuan">Syarat &amp; Ketentuan</a> kami.</p>`,
+  },
+  {
+    id: 'data-yang-dikumpulkan',
+    title: '2. Data yang Kami Kumpulkan',
+    body: `<p>Kami hanya mengumpulkan data yang diperlukan untuk memproses pesanan Anda:</p>
+<ul>
+<li><strong>Data yang Anda berikan:</strong> nama dan alamat email yang Anda isi saat checkout;</li>
+<li><strong>Data transaksi:</strong> nomor pesanan, produk yang dibeli, jumlah pembayaran, waktu transaksi, dan status pembayaran;</li>
+<li><strong>Data teknis:</strong> informasi standar server seperti alamat IP dan jenis peramban, yang tercatat otomatis untuk keperluan keamanan.</li>
+</ul>
+<p>Kami <strong>tidak pernah</strong> meminta atau menyimpan data sensitif seperti nomor kartu kredit, PIN, atau data biometrik. Pembayaran diproses sepenuhnya oleh penyedia jasa pembayaran.</p>`,
+  },
+  {
+    id: 'penggunaan-data',
+    title: '3. Cara Kami Menggunakan Data',
+    body: `<p>Data yang terkumpul kami gunakan untuk:</p>
+<ul>
+<li>Memproses pesanan dan memverifikasi pembayaran Anda;</li>
+<li>Mengirimkan detail akun dan kredensial produk ke email Anda;</li>
+<li>Menyediakan fitur Cek Pesanan agar Anda dapat melihat kembali detail pesanan;</li>
+<li>Menangani klaim garansi dan permintaan pengembalian dana;</li>
+<li>Mencegah penipuan dan penyalahgunaan sistem.</li>
+</ul>`,
+  },
+  {
+    id: 'pembagian-data',
+    title: '4. Pembagian Data kepada Pihak Ketiga',
+    body: `<p>Kami <strong>tidak pernah menjual, menyewakan, atau memperdagangkan</strong> data pribadi Anda. Data hanya dibagikan secara terbatas kepada:</p>
+<ul>
+<li><strong>Penyedia jasa pembayaran</strong> — untuk memproses dan memverifikasi transaksi;</li>
+<li><strong>Penyedia layanan email</strong> — untuk mengirimkan detail pesanan dan kredensial akun;</li>
+<li><strong>Penyedia infrastruktur data</strong> — untuk penyimpanan basis data aplikasi.</li>
+</ul>
+<p>Pembagian data semata-mata untuk menjalankan layanan sesuai pesanan Anda.</p>`,
+  },
+  {
+    id: 'cookies',
+    title: '5. Cookies',
+    body: `<p>Situs kami hanya menggunakan cookie dan penyimpanan lokal yang bersifat <strong>fungsional</strong>, misalnya untuk menjaga sesi dan preferensi tampilan. Kami tidak menggunakan cookie pelacakan pihak ketiga untuk iklan. Anda dapat menonaktifkan cookie melalui pengaturan peramban, meskipun sebagian fitur situs mungkin tidak berfungsi optimal.</p>`,
+  },
+  {
+    id: 'keamanan',
+    title: '6. Keamanan Data',
+    body: `<p>Kami menerapkan langkah teknis dan organisasi yang wajar untuk melindungi data Anda, termasuk enkripsi koneksi (HTTPS), pembatasan akses hanya untuk pihak yang berkepentingan, serta pemisahan kredensial sensitif dari data publik. Meskipun demikian, tidak ada metode transmisi data yang sepenuhnya aman, dan kami tidak dapat menjamin keamanan absolut.</p>`,
+  },
+  {
+    id: 'retensi',
+    title: '7. Penyimpanan Data (Retensi)',
+    body: `<p>Data transaksi kami simpan selama diperlukan untuk keperluan garansi, penyelesaian sengketa, dan pemenuhan kewajiban pencatatan. Data yang sudah tidak diperlukan akan dihapus atau dianonimkan secara berkala.</p>`,
+  },
+  {
+    id: 'hak-anda',
+    title: '8. Hak Anda',
+    body: `<p>Sesuai peraturan perundang-undangan yang berlaku, Anda berhak untuk:</p>
+<ul>
+<li>Meminta akses terhadap data pribadi Anda yang kami simpan;</li>
+<li>Meminta koreksi atas data yang tidak akurat;</li>
+<li>Meminta penghapusan data pribadi Anda, sepanjang tidak bertentangan dengan kewajiban pencatatan transaksi;</li>
+<li>Menarik persetujuan atas pemrosesan data tertentu.</li>
+</ul>
+<p>Permintaan dapat disampaikan melalui email <a href="mailto:hello@tokosans.id">hello@tokosans.id</a> dan akan kami tanggapi dalam waktu paling lama 14 hari kerja.</p>`,
+  },
+  {
+    id: 'perubahan-kebijakan',
+    title: '9. Perubahan Kebijakan & Kontak',
+    body: `<p>Kebijakan Privasi ini dapat kami perbarui sewaktu-waktu. Versi terbaru selalu tersedia pada halaman ini beserta tanggal pembaruannya. Pertanyaan lebih lanjut dapat disampaikan ke <a href="mailto:hello@tokosans.id">hello@tokosans.id</a>.</p>`,
+  },
+];
+
+const metaTitle = 'Kebijakan Privasi — tokosans.';
+const metaDescription = 'Kebijakan Privasi tokosans. — bagaimana kami mengumpulkan, menggunakan, dan melindungi data pribadi Anda.';
+---
+<Legal
+  title="Kebijakan Privasi"
+  metaTitle={metaTitle}
+  description={metaDescription}
+  updated="15 Agustus 2026"
+  sections={sections}
+/>

@@ -9,7 +9,7 @@ const id = Astro.params.id ?? 'new';
 const product = id === 'new' ? null : await getProduct(id);
 const categories = await getCategories();
 
-if (id !== 'new' && !product) return Astro.redirect('/dashboard');
+if (id !== 'new' && !product) return Astro.redirect('/dashboard/products');
 
 const value = (key: keyof NonNullable<typeof product>, fallback = '') => product?.[key] ?? fallback;
 const existingPackages: ProductPackage[] = product ? await getProductPackages(product) : [];
@@ -359,7 +359,7 @@ const existingPackages: ProductPackage[] = product ? await getProductPackages(pr
       notify('success', 'Produk berhasil disimpan.');
       message.style.color = '#059669';
       message.textContent = 'Produk berhasil disimpan. Mengalihkan...';
-      setTimeout(() => location.href = '/dashboard', 900);
+      setTimeout(() => location.href = '/dashboard/products', 900);
     } catch (error) {
       const text = error instanceof Error ? error.message : 'Gagal menyimpan produk.';
       notify('error', text);
@@ -384,7 +384,7 @@ const existingPackages: ProductPackage[] = product ? await getProductPackages(pr
         throw new Error(data.message || 'Gagal menghapus produk.');
       }
       notify('success', 'Produk berhasil dihapus.');
-      setTimeout(() => location.href = '/dashboard', 900);
+      setTimeout(() => location.href = '/dashboard/products', 900);
     } catch (error) {
       notify('error', error instanceof Error ? error.message : 'Gagal menghapus produk.');
       (deleteBtn as HTMLButtonElement).disabled = false;

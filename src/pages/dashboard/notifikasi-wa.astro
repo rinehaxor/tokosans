@@ -1,0 +1,140 @@
+---
+import { getAdminWaNumber } from '../../lib/wa-client';
+import ToastProvider from '../../components/ToastProvider';
+import AdminSidebar from '../../components/AdminSidebar.astro';
+const adminNumber = getAdminWaNumber();
+const adminDisplay = adminNumber ? `+${adminNumber}` : null;
+---
+<ToastProvider client:load />
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Notifikasi WA - Admin Dashboard - TokoSans</title>
+  <style is:global>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+    :root{--ink:#191026;--muted:#6b6178;--v:#7048e8;--v2:#5c35d4;--l:#f3edff;--line:#eae3f5;--bg:#faf8fe;--surface:#fff;--green:#059669;--green-bg:#ecfdf5;--red:#ef4444;--red-bg:#fef2f2;--yellow:#f59e0b;--yellow-bg:#fffbeb}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+    h1,h2,h3,h4{font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:-.03em}
+    .layout{display:flex;min-height:100vh}
+    .content{flex:1;margin-left:250px;padding:40px 48px 80px;max-width:900px}
+    .page-head{margin-bottom:32px}.page-head h1{margin:0 0 6px;font-size:2rem;font-weight:800}.page-head p{margin:0;color:var(--muted);font-size:.95rem}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 4px 24px rgba(112,72,232,.04);padding:28px;margin-bottom:24px}
+    .card-title{margin:0 0 6px;font-size:1.15rem;font-weight:800}
+    .card-desc{color:var(--muted);font-size:.88rem;margin:0 0 22px}
+    .status-row{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+    .status-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:99px;font-weight:700;font-size:.85rem}
+    .status-badge.disconnected{background:var(--red-bg);color:var(--red)}
+    .status-badge.connecting,.status-badge.qr{background:var(--yellow-bg);color:var(--yellow)}
+    .status-badge.open{background:var(--green-bg);color:var(--green)}
+    .status-badge.closed{background:var(--red-bg);color:var(--red)}
+    .status-dot{width:10px;height:10px;border-radius:50%;background:currentColor;animation:pulse 1.5s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .meta{font-size:.88rem;color:var(--muted);margin:0 0 20px}.meta strong{color:var(--ink)}
+    .warn-box{display:flex;gap:12px;align-items:flex-start;padding:14px 18px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;margin-bottom:20px;font-size:.85rem;color:#92400e}.warn-box svg{flex-shrink:0;margin-top:1px}
+    .qr-box{display:flex;flex-direction:column;align-items:center;gap:14px;padding:24px;background:var(--bg);border:1px dashed var(--line);border-radius:16px;margin-bottom:20px}
+    .qr-box img{width:240px;height:240px;border-radius:12px;background:#fff;padding:8px}
+    .qr-hint{font-size:.82rem;color:var(--muted);text-align:center;max-width:320px;line-height:1.5}
+    .btn-row{display:flex;gap:12px;flex-wrap:wrap}
+    .btn{padding:12px 22px;border:0;border-radius:12px;font:700 .88rem 'DM Sans',sans-serif;cursor:pointer;transition:all .15s ease}.btn:disabled{opacity:.6;cursor:not-allowed}
+    .btn-primary{background:var(--v);color:#fff}.btn-primary:hover:not(:disabled){background:var(--v2);transform:translateY(-1px)}
+    .btn-danger{background:var(--red-bg);color:var(--red);border:1px solid #fca5a5}.btn-danger:hover:not(:disabled){background:#fee2e2}
+    .btn-success{background:var(--green);color:#fff}.btn-success:hover:not(:disabled){background:#047857;transform:translateY(-1px)}
+    .msg{margin:14px 0 0;font-size:.86rem;font-weight:600;min-height:22px}
+    code{background:var(--l);padding:2px 7px;border-radius:6px;font-size:.82rem;font-weight:600;color:var(--v)}
+    @media(max-width:900px){.content{margin-left:0;padding:24px 20px}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <AdminSidebar active="notifikasi-wa" />
+  <main class="content">
+    <div class="page-head">
+      <h1>Notifikasi WhatsApp</h1>
+      <p>Terima notifikasi penjualan baru langsung ke WhatsApp admin</p>
+    </div>
+    {!adminDisplay && (
+      <div class="warn-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div><strong>ADMIN_WA_NUMBER belum dikonfigurasi.</strong> Tambahkan di <code>.env</code> server dengan format <code>ADMIN_WA_NUMBER=628xxxxxxxxxxx</code>, lalu restart.</div>
+      </div>
+    )}
+    <div class="card">
+      <h2 class="card-title">Status Koneksi</h2>
+      <p class="card-desc">Hubungkan akun WhatsApp admin untuk menerima notifikasi otomatis setiap penjualan.</p>
+      <div class="status-row">
+        <span class="status-badge disconnected" id="status-badge"><span class="status-dot"></span><span id="status-text">Memeriksa...</span></span>
+      </div>
+      <p class="meta">Nomor admin: <strong>{adminDisplay ?? 'belum diatur'}</strong></p>
+      <div id="qr-container"></div>
+      <div class="btn-row">
+        <button type="button" id="connect-btn" class="btn btn-primary" disabled>Hubungkan</button>
+        <button type="button" id="disconnect-btn" class="btn btn-danger" disabled>Putuskan</button>
+        <button type="button" id="test-btn" class="btn btn-success" disabled>Kirim Tes</button>
+      </div>
+      <p class="msg" id="wa-msg"></p>
+    </div>
+  </main>
+</div>
+<script>
+// @ts-nocheck
+const notify = (t, m) => window.dispatchEvent(new CustomEvent('app:toast', { detail: { type: t, message: m } }));
+const statusBadge = document.getElementById('status-badge');
+const statusText = document.getElementById('status-text');
+const qrContainer = document.getElementById('qr-container');
+const connectBtn = document.getElementById('connect-btn');
+const disconnectBtn = document.getElementById('disconnect-btn');
+const testBtn = document.getElementById('test-btn');
+const msg = document.getElementById('wa-msg');
+const stateLabels = { disconnected: 'Terputus', connecting: 'Menghubungkan...', qr: 'Menunggu Scan QR', open: 'Terhubung', closed: 'Koneksi Ditutup' };
+function setStatus(state) {
+  statusText.textContent = stateLabels[state] || state;
+  statusBadge.className = `status-badge ${state}`;
+  const connected = state === 'open';
+  connectBtn.disabled = connected || state === 'connecting';
+  disconnectBtn.disabled = !connected && state !== 'qr';
+  testBtn.disabled = !connected;
+}
+function setMsg(text, color) { msg.textContent = text || ''; msg.style.color = color || ''; }
+async function poll() {
+  try {
+    const r = await fetch('/api/admin/wa/status');
+    const d = await r.json();
+    setStatus(d.state);
+    if (d.state === 'qr' && d.qr) {
+      qrContainer.innerHTML = `<div class="qr-box"><img src="${d.qr}" alt="QR Code WhatsApp"/><p class="qr-hint">Scan QR ini dengan WhatsApp di HP kamu:<br/><strong>Settings → Linked Devices → Link a Device</strong></p></div>`;
+    } else { qrContainer.innerHTML = ''; }
+  } catch { statusText.textContent = 'Gagal memeriksa status'; }
+}
+connectBtn?.addEventListener('click', async () => {
+  connectBtn.disabled = true; setMsg('Memulai koneksi...', 'var(--muted)');
+  try {
+    await fetch('/api/admin/wa/connect', { method: 'POST' });
+    notify('success', 'Koneksi dimulai. Scan QR jika muncul.'); poll();
+  } catch { setMsg('Error koneksi ke server.', 'var(--red)'); notify('error', 'Gagal menghubungkan.'); }
+  connectBtn.disabled = false;
+});
+disconnectBtn?.addEventListener('click', async () => {
+  if (!confirm('Putuskan koneksi WhatsApp? Kamu harus scan QR lagi untuk menghubungkan kembali.')) return;
+  disconnectBtn.disabled = true; setMsg('Memutuskan...', 'var(--muted)');
+  try {
+    await fetch('/api/admin/wa/disconnect', { method: 'POST' });
+    notify('success', 'Koneksi diputus.'); poll();
+  } catch { setMsg('Error koneksi ke server.', 'var(--red)'); notify('error', 'Gagal memutuskan.'); }
+  disconnectBtn.disabled = false;
+});
+testBtn?.addEventListener('click', async () => {
+  testBtn.disabled = true; setMsg('Mengirim pesan tes...', 'var(--muted)');
+  try {
+    const r = await fetch('/api/admin/wa/test', { method: 'POST' });
+    const d = await r.json();
+    if (d.ok) { setMsg(d.message, 'var(--green)'); notify('success', d.message); }
+    else { setMsg(d.message, 'var(--red)'); notify('error', d.message); }
+  } catch { setMsg('Error koneksi ke server.', 'var(--red)'); notify('error', 'Gagal mengirim tes.'); }
+  testBtn.disabled = false;
+});
+poll();
+setInterval(poll, 3000);
+</script>
+</body>
+</html>

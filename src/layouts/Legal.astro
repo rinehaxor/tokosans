@@ -1,0 +1,100 @@
+---
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  metaTitle: string;
+  description: string;
+  updated: string;
+  sections: { id: string; title: string; body: string }[];
+}
+
+const { title, metaTitle, description, updated, sections } = Astro.props;
+---
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png" />
+    <title>{metaTitle}</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+      :root{--ink:#201630;--muted:#746a80;--v:#7048e8;--l:#f0ecff;--line:#e8e2f2;--bg:#fdfcff}
+      *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif}
+      h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
+      .shell{max-width:860px;margin:auto;padding:0 28px}
+      .site-header{position:sticky;top:0;z-index:1000;background:rgba(253,252,255,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+      .nav{height:76px;display:flex;align-items:center;justify-content:space-between}
+      .logo{display:flex;align-items:center;gap:10px;font:800 1.55rem 'Plus Jakarta Sans';letter-spacing:-1.5px;color:var(--ink);text-decoration:none}.logo b{color:var(--v)}
+      .logo-img{width:32px;height:32px;border-radius:8px;object-fit:contain}
+      .nav-links{display:flex;align-items:center;gap:27px}.nav-links a{color:#5f566a;font-size:.9rem;font-weight:700;text-decoration:none}.nav-links a:hover{color:var(--v)}
+      .nav-cta{padding:11px 16px;background:var(--ink);color:#fff!important;display:inline-flex;align-items:center;border-radius:12px;text-decoration:none;font-weight:700}.nav-cta:hover{background:var(--v)}
+      .hero{padding:52px 0 26px}
+      .hero-back{display:inline-block;color:var(--muted);font-size:.82rem;font-weight:700;text-decoration:none;margin-bottom:20px;transition:color .18s}
+      .hero-back:hover{color:var(--v)}
+      .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:99px;background:#fff;border:1px solid #dfd4fa;color:var(--v);font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;box-shadow:0 2px 8px rgba(112,72,232,.06)}
+      .hero h1{font-size:clamp(2rem,4vw,2.9rem);margin:16px 0 10px}
+      .updated{color:var(--muted);font-size:.88rem;margin:0}.updated strong{color:var(--ink)}
+      .toc{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 24px;margin:6px 0 14px;box-shadow:0 12px 34px #33205208}
+      .toc strong{display:block;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--v);margin-bottom:10px}
+      .toc ol{margin:0;padding-left:20px;display:grid;grid-template-columns:1fr 1fr;gap:5px 28px}
+      .toc a{color:#4a4256;font-size:.86rem;text-decoration:none;font-weight:600}.toc a:hover{color:var(--v)}
+      .legal{padding:6px 0 12px}
+      .legal-section{background:#fff;border:1px solid var(--line);border-radius:20px;padding:28px 30px;margin-bottom:16px;scroll-margin-top:100px;box-shadow:0 12px 34px #33205208}
+      .legal-section h2{margin:0 0 14px;font-size:1.22rem;color:var(--ink);line-height:1.35}
+      .prose p{margin:0 0 14px;color:#4a4256;font-size:.94rem;line-height:1.78}
+      .prose ul,.prose ol{margin:0 0 16px;padding-left:22px;color:#4a4256;font-size:.94rem;line-height:1.78}
+      .prose li{margin:0 0 8px}
+      .prose li::marker{color:var(--v);font-weight:700}
+      .prose strong{color:var(--ink)}
+      .prose a{color:var(--v);font-weight:600;text-decoration:none}.prose a:hover{text-decoration:underline}
+      .prose code{background:var(--l);color:#5631bb;padding:2px 7px;border-radius:6px;font-size:.85em}
+      .contact{background:linear-gradient(135deg,#1c1129,#2a1846);border-radius:20px;padding:34px 30px;text-align:center;margin:26px 0 64px}
+      .contact h3{color:#fff;margin:0 0 8px;font-size:1.28rem}
+      .contact p{color:#b8accd;font-size:.9rem;margin:0 0 18px;line-height:1.6}
+      .contact-btn{display:inline-flex;padding:12px 26px;border-radius:12px;background:var(--v);color:#fff!important;font-weight:700;text-decoration:none;transition:background .18s}
+      .contact-btn:hover{background:#5b34c7}
+      @media(max-width:600px){.nav-links{gap:16px}.toc ol{grid-template-columns:1fr}.legal-section{padding:22px 20px}}
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="shell">
+        <nav class="nav">
+          <a class="logo" href="/"><img src="/favicon.svg" alt="logo" class="logo-img" /><span>tokosans<b>.</b></span></a>
+          <div class="nav-links"><a href="/#produk">Produk</a><a href="/blog">Blog</a><a href="/#faq">FAQ</a><a class="nav-cta" href="/#produk">Belanja</a></div>
+        </nav>
+      </div>
+    </header>
+    <main class="shell">
+      <div class="hero">
+        <a class="hero-back" href="/">← Kembali ke toko</a><br />
+        <span class="badge">Informasi Legal</span>
+        <h1>{title}</h1>
+        <p class="updated">Terakhir diperbarui: <strong>{updated}</strong></p>
+      </div>
+      <nav class="toc" aria-label="Daftar isi">
+        <strong>Daftar Isi</strong>
+        <ol>{sections.map((section) => <li><a href={`#${section.id}`}>{section.title}</a></li>)}</ol>
+      </nav>
+      <article class="legal">
+        {sections.map((section) => (
+          <section class="legal-section" id={section.id}>
+            <h2>{section.title}</h2>
+            <div class="prose" set:html={section.body} />
+          </section>
+        ))}
+      </article>
+      <aside class="contact">
+        <h3>Masih ada pertanyaan?</h3>
+        <p>Tim kami siap membantu Anda terkait ketentuan layanan, privasi data, maupun proses pengembalian dana. Hubungi kami kapan saja.</p>
+        <a class="contact-btn" href="mailto:hello@tokosans.id">hello@tokosans.id</a>
+      </aside>
+    </main>
+    <Footer />
+  </body>
+</html>

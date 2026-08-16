@@ -1,0 +1,189 @@
+---
+import { getProducts } from '../../../lib/products';
+import { formatRupiah } from '../../../lib/catalog';
+import ToastProvider from '../../../components/ToastProvider';
+import AdminSidebar from '../../../components/AdminSidebar.astro';
+
+const products = await getProducts();
+const total = products.length;
+const activeCount = products.filter((p) => p.active !== false).length;
+const inactiveCount = products.filter((p) => p.active === false).length;
+const totalStock = products.reduce((sum, p) => sum + (p.stock ?? 0), 0);
+const categories = [...new Set(products.map((p) => p.category))];
+---
+<ToastProvider client:load />
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kelola Produk - Admin Dashboard - TokoSans</title>
+  <style is:global>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+    :root{--ink:#191026;--muted:#6b6178;--v:#7048e8;--v2:#5c35d4;--l:#f3edff;--line:#eae3f5;--bg:#faf8fe;--surface:#fff;--green:#10b981;--green-bg:#ecfdf5;--yellow:#f59e0b;--yellow-bg:#fffbeb;--red:#ef4444;--red-bg:#fef2f2;--blue:#3b82f6;--blue-bg:#eff6ff}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+    h1,h2,h3,h4{font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:-.03em}
+    .layout{display:flex;min-height:100vh}
+    .content{flex:1;margin-left:250px;padding:40px 48px 80px;max-width:1400px}
+    .page-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:32px;gap:20px}
+    .page-title h1{margin:0 0 6px;font-size:2rem;font-weight:800}
+    .page-title p{margin:0;color:var(--muted);font-size:.92rem}
+    .btn-create{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;background:var(--v);color:#fff;border:0;border-radius:12px;font:700 .88rem 'DM Sans',sans-serif;text-decoration:none;transition:all .15s ease}
+    .btn-create:hover{background:var(--v2);transform:translateY(-1px)}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+    .stat-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;align-items:center;justify-content:space-between}
+    .stat-info label{display:block;font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:4px}
+    .stat-info span{font-size:1.6rem;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif}
+    .stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+    .stat-icon.violet{background:var(--l);color:var(--v)}
+    .stat-icon.green{background:var(--green-bg);color:var(--green)}
+    .stat-icon.yellow{background:var(--yellow-bg);color:var(--yellow)}
+    .stat-icon.blue{background:var(--blue-bg);color:var(--blue)}
+    .toolbar{display:flex;gap:12px;margin-bottom:20px;align-items:center}
+    .search-box{flex:1;position:relative}
+    .search-box input{width:100%;padding:11px 16px 11px 42px;border:1.5px solid var(--line);border-radius:12px;font:400 .9rem 'DM Sans',sans-serif;background:var(--surface);outline:none;transition:all .2s}
+    .search-box input:focus{border-color:var(--v);box-shadow:0 0 0 4px rgba(112,72,232,.1)}
+    .search-box svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
+    .filter-select{padding:11px 16px;border:1.5px solid var(--line);border-radius:12px;font:600 .85rem 'DM Sans',sans-serif;background:var(--surface);outline:none;cursor:pointer}
+    .filter-select:focus{border-color:var(--v)}
+    .table-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 4px 24px rgba(112,72,232,.04)}
+    table{width:100%;border-collapse:collapse}
+    thead th{text-align:left;padding:14px 20px;font-size:.76rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1.5px solid var(--line);background:#fbf9fe}
+    tbody td{padding:16px 20px;border-bottom:1px solid var(--line);font-size:.9rem;vertical-align:middle}
+    tbody tr:last-child td{border-bottom:0}
+    tbody tr:hover{background:#fdfcff}
+    .prod-cell{display:flex;align-items:center;gap:14px}
+    .prod-icon{width:40px;height:40px;border-radius:10px;background:var(--l);color:var(--v);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;flex-shrink:0;overflow:hidden}
+    .prod-icon img{width:100%;height:100%;border-radius:10px;object-fit:cover}
+    .prod-name{font-weight:700;color:var(--ink)}
+    .prod-cat{font-size:.78rem;color:var(--muted)}
+    .price-cell{font-weight:700;color:var(--ink)}
+    .price-old{font-size:.78rem;color:var(--muted);text-decoration:line-through;font-weight:400}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;font-weight:700;font-size:.78rem}
+    .badge.ok{background:var(--green-bg);color:var(--green)}
+    .badge.low{background:var(--yellow-bg);color:var(--yellow)}
+    .badge.empty{background:var(--red-bg);color:var(--red)}
+    .badge.na{background:#f3f4f6;color:#9ca3af}
+    .badge.on{background:var(--green-bg);color:var(--green)}
+    .badge.off{background:var(--red-bg);color:var(--red)}
+    .badge-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+    .action-cell{display:flex;gap:8px}
+    .btn-edit{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--line);border-radius:10px;font:700 .8rem 'DM Sans',sans-serif;color:var(--v);text-decoration:none;background:var(--surface);transition:all .15s}
+    .btn-edit:hover{border-color:var(--v);background:var(--l)}
+    .btn-del{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid #fca5a5;border-radius:10px;font:700 .8rem 'DM Sans',sans-serif;color:var(--red);background:var(--red-bg);cursor:pointer;transition:all .15s}
+    .btn-del:hover{background:var(--red);color:#fff}
+    .btn-del:disabled{opacity:.5;cursor:not-allowed}
+    .empty-row{padding:48px;text-align:center;color:var(--muted)}
+    @media(max-width:900px){.layout{flex-direction:column}.content{margin-left:0;padding:24px 16px 40px}.stats-grid{grid-template-columns:repeat(2,1fr)}.page-head{flex-direction:column;align-items:flex-start}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <AdminSidebar active="products" />
+  <main class="content">
+    <div class="page-head">
+      <div class="page-title">
+        <h1>Kelola Produk</h1>
+        <p>Atur katalog produk, harga, paket durasi, dan status ketersediaan.</p>
+      </div>
+      <a href="/dashboard/products/new" class="btn-create">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tambah Produk
+      </a>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-info"><label>Total Produk</label><span>{total}</span></div><div class="stat-icon violet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
+      <div class="stat-card"><div class="stat-info"><label>Aktif</label><span>{activeCount}</span></div><div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+      <div class="stat-card"><div class="stat-info"><label>Nonaktif</label><span>{inactiveCount}</span></div><div class="stat-icon yellow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div></div>
+      <div class="stat-card"><div class="stat-info"><label>Total Stok</label><span>{totalStock}</span></div><div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.91 8.84 8.56 2.23a1.93 1.93 0 0 0-1.66 0L2.6 4.45a5.05 5.05 0 0 0 0 1.81l12.35 6.61a1.93 1.93 0 0 0 1.66 0l3.3-1.78a5.05 5.05 0 0 0 0-1.81Z"/><path d="m3.65 6.31 6.69 3.57"/><path d="M3.65 6.31v5.86c0 .4.18.78.5 1.03l12.35 6.61a1.93 1.93 0 0 0 1.66 0"/></svg></div></div>
+    </div>
+    <div class="toolbar">
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search" placeholder="Cari produk by nama atau kategori..."/>
+      </div>
+      <select class="filter-select" id="filter-cat">
+        <option value="">Semua Kategori</option>
+        {categories.map((cat) => <option value={cat}>{cat}</option>)}
+      </select>
+    </div>
+    <div class="table-card">
+      <table>
+        <thead><tr><th>Produk</th><th>Durasi</th><th>Harga</th><th>Stok</th><th>Status</th><th>Aksi</th></tr></thead>
+        <tbody id="prod-tbody">
+          {products.map((p) => {
+            const stock = p.stock ?? 0;
+            const stockClass = p.stock === undefined ? 'na' : stock === 0 ? 'empty' : stock < 5 ? 'low' : 'ok';
+            const stockLabel = p.stock === undefined ? 'N/A' : String(stock);
+            const isActive = p.active !== false;
+            return (
+              <tr data-name={p.name.toLowerCase()} data-cat={p.category}>
+                <td>
+                  <div class="prod-cell">
+                    <div class="prod-icon">{p.image_url ? <img src={p.image_url} alt={p.name} /> : p.icon}</div>
+                    <div><div class="prod-name">{p.name}</div><div class="prod-cat">{p.category}</div></div>
+                  </div>
+                </td>
+                <td>{p.duration}</td>
+                <td>
+                  <div class="price-cell">{formatRupiah(p.price)}</div>
+                  {p.original_price && p.original_price > p.price ? <div class="price-old">{formatRupiah(p.original_price)}</div> : null}
+                </td>
+                <td><span class={`badge ${stockClass}`}><span class="badge-dot"></span>{stockLabel}</span></td>
+                <td><span class={`badge ${isActive ? 'on' : 'off'}`}><span class="badge-dot"></span>{isActive ? 'Aktif' : 'Nonaktif'}</span></td>
+                <td>
+                  <div class="action-cell">
+                    <a href={`/dashboard/products/${p.id}`} class="btn-edit">Edit</a>
+                    <button class="btn-del" data-id={p.id} data-name={p.name}>Hapus</button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+          {products.length === 0 && <tr><td colspan="6" class="empty-row">Belum ada produk. Klik "Tambah Produk" untuk membuat produk pertama.</td></tr>}
+    <script>
+    // @ts-nocheck
+    const notify = (t, m) => window.dispatchEvent(new CustomEvent('app:toast', { detail: { type: t, message: m } }));
+    const searchInput = document.getElementById('search');
+    const filterCat = document.getElementById('filter-cat');
+    const tbody = document.getElementById('prod-tbody');
+    function applyFilter() {
+      const q = searchInput.value.toLowerCase().trim();
+      const cat = filterCat.value;
+      tbody.querySelectorAll('tr').forEach((row) => {
+        const name = row.getAttribute('data-name') || '';
+        const rowCat = row.getAttribute('data-cat') || '';
+        const matchesText = !q || name.includes(q);
+        const matchesCat = !cat || rowCat === cat;
+        row.style.display = matchesText && matchesCat ? '' : 'none';
+      });
+    }
+    searchInput?.addEventListener('input', applyFilter);
+    filterCat?.addEventListener('change', applyFilter);
+    tbody?.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.btn-del');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      const name = btn.getAttribute('data-name');
+      if (!confirm(`Hapus produk "${name}"? Semua paket dan stok akun terkait juga akan dihapus.`)) return;
+      btn.disabled = true;
+      btn.textContent = 'Menghapus...';
+      try {
+        const res = await fetch('/api/admin/products', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Gagal menghapus produk.');
+        notify('success', `Produk "${name}" berhasil dihapus.`);
+        btn.closest('tr')?.remove();
+      } catch (err) {
+        notify('error', err instanceof Error ? err.message : 'Gagal menghapus produk.');
+        btn.disabled = false;
+        btn.textContent = 'Hapus';
+      }
+    });
+    </script>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+</body>
+</html>

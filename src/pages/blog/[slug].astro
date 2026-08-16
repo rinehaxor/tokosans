@@ -1,5 +1,9 @@
 ---
 import { getPostBySlug, formatBlogDate, estimateReadTime } from '../../lib/blog';
+import { getProducts } from '../../lib/products';
+import { formatRupiah } from '../../lib/catalog';
+import { getSupabaseAdmin } from '../../lib/supabase';
+import { injectHeadingIds, buildTocTree } from '../../lib/toc';
 import RecentSalesToast from '../../components/RecentSalesToast.astro';
 import Footer from '../../components/Footer.astro';
 
@@ -29,6 +33,37 @@ const isHtml = /^\s*<[a-z0-9]+/i.test(post.content.trim());
 const htmlContent = isHtml ? post.content : md2html(post.content);
 const readTime = estimateReadTime(post.content);
 
+// Table of contents: injeksi id ke setiap heading h2/h3 lalu susun daftar isinya
+const { html: contentWithIds, toc } = injectHeadingIds(htmlContent);
+const tocTree = buildTocTree(toc);
+
+// Produk terkait: nama produk disebut dalam artikel -> kategori sama -> fallback produk aktif
+const STOPWORDS = new Set(['yang', 'untuk', 'dengan', 'dari', 'kami', 'anda', 'akun', 'bulan', 'hari', 'team', 'premium', 'plus', 'paket']);
+let relatedProducts: Awaited<ReturnType<typeof getProducts>> = [];
+let relatedIsMatched = false;
+try {
+  const all = (await getProducts()).filter((p) => p.active !== false);
+  const haystack = `${post.title} ${post.excerpt} ${post.content}`.toLowerCase();
+  const mentioned = all.filter((p) => {
+    const words = p.name.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !STOPWORDS.has(w));
+    return words.some((w) => haystack.includes(w));
+  });
+  const sameCategory = all.filter((p) => p.category.toLowerCase() === (post.category || '').toLowerCase());
+  const seen = new Set<string>();
+  relatedProducts = [...mentioned, ...sameCategory, ...all]
+    .filter((p) => (seen.has(p.id) ? false : (seen.add(p.id), true)))
+    .slice(0, 3);
+  relatedIsMatched = mentioned.length > 0 || sameCategory.length > 0;
+} catch { /* daftar produk opsional — biarkan kosong bila gagal */ }
+
+let relatedImages: Record<string, string> = {};
+if (relatedProducts.length > 0) {
+  try {
+    const { data: inv } = await getSupabaseAdmin().from('inventory').select('product_id,image_url,active');
+    for (const item of inv ?? []) if (item.active !== false && item.image_url) relatedImages[item.product_id] = item.image_url;
+  } catch { /* fallback ke ikon bawaan */ }
+}
+
 ---
 
 <html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content={post.excerpt || post.title}/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/><link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png"/><title>{post.title} — tokosans.</title>
@@ -49,7 +84,43 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 .article-meta{display:flex;align-items:center;justify-content:center;gap:14px;font-size:.88rem;color:var(--muted);font-weight:600;margin-bottom:32px}
 .article-cover{max-width:760px;margin:0 auto 40px;border-radius:20px;overflow:hidden;border:1px solid var(--line)}
 .article-cover img{width:100%;height:auto;display:block}
-.article-content{max-width:700px;margin:0 auto 80px;font-size:1.02rem;line-height:1.85;color:#2d2340}
+.article-content{max-width:700px;margin:0 auto 48px;font-size:1.02rem;line-height:1.85;color:#2d2340}
+.article-content h2,.article-content h3{scroll-margin-top:100px}
+.toc-box{max-width:700px;margin:0 auto 40px;background:linear-gradient(135deg,#fff 0%,#faf8fe 100%);border:1px solid var(--line);border-radius:16px;padding:24px 28px;box-shadow:0 8px 24px rgba(51,32,82,.08)}
+.toc-head{display:flex;align-items:center;gap:10px;color:var(--v);margin-bottom:16px}
+.toc-head strong{font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;font-weight:800}
+.toc-box ol{margin:0;padding:0;display:flex;flex-direction:column;gap:0;list-style:none}
+.toc-list{counter-reset:toc}
+.toc-list>li{counter-increment:toc;border-bottom:1px solid rgba(224,210,250,.4);padding:12px 0}
+.toc-list>li:last-child{border-bottom:none}
+.toc-list>li>a{display:inline-block;padding:4px 0}
+.toc-list>li>a::before{content:counter(toc) ". ";color:var(--v);font-weight:800;margin-right:6px}
+.toc-sublist{counter-reset:toc-sub;gap:0;margin:8px 0 0 20px;padding:0;list-style-type:none;display:flex;flex-direction:column}
+.toc-sublist>li{list-style-type:none;padding:6px 0;display:list-item}
+.toc-sublist>li::before{content:"•";color:var(--v);margin-right:8px;font-weight:800}
+.toc-sublist>li>a::before{content:''}
+.toc-box a{color:#4a4256;font-size:.88rem;font-weight:600;text-decoration:none;transition:all .2s}
+.toc-box a:hover{color:var(--v);padding-left:4px}
+.toc-item.sub a{color:var(--muted);font-weight:500;font-size:.83rem}
+.related{max-width:960px;margin:0 auto 80px}
+.related-head{margin-bottom:4px}
+.related-kicker{display:inline-flex;padding:5px 14px;border-radius:99px;background:#fff;border:1px solid #dfd4fa;color:var(--v);font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.related h2{font-size:clamp(1.4rem,2.5vw,1.9rem);margin:12px 0 0}
+.related-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;margin-top:24px}
+.related-card{display:flex;gap:14px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;text-decoration:none;color:var(--ink);box-shadow:0 4px 16px rgba(0,0,0,.02);transition:transform .2s,border-color .2s,box-shadow .2s}
+.related-card:hover{transform:translateY(-4px);border-color:#d4c8f5;box-shadow:0 14px 38px rgba(112,72,232,.12)}
+.related-icon{width:52px;height:52px;min-width:52px;border-radius:14px;background:#f8fafc;border:1px solid #f1f5f9;display:grid;place-items:center;font-size:1.5rem;overflow:hidden}
+.related-icon img{width:100%;height:100%;object-fit:cover}
+.related-body{min-width:0;flex:1}
+.related-body h3{margin:0 0 8px;font-size:1rem;line-height:1.3}
+.related-badges{display:flex;gap:6px;margin-bottom:10px}
+.rb{padding:3px 8px;border-radius:6px;font-size:.7rem;font-weight:700;line-height:1}
+.rb-blue{background:#eff6ff;color:#2563eb}
+.rb-green{background:#ecfdf5;color:#059669}
+.related-price{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.related-price s{color:#94a3b8;font-size:.8rem;font-weight:500}
+.related-price strong{font-family:'Plus Jakarta Sans';font-size:1.05rem;font-weight:800;letter-spacing:-.02em;color:#0f172a}
+.related-price em{background:#fffbeb;color:#b45309;border:1px solid #fef3c7;font-style:normal;font-size:.7rem;font-weight:700;padding:2px 6px;border-radius:6px}
 .article-content h2{font-size:1.4rem;margin:36px 0 12px;color:var(--ink)}
 .article-content h3{font-size:1.15rem;margin:28px 0 10px;color:var(--ink)}
 .article-content p{margin:0 0 18px}
@@ -64,7 +135,7 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--v);font-weight:700;font-size:.9rem;text-decoration:none;margin-bottom:20px}
 .back-link:hover{text-decoration:underline}
 .footer{padding:40px 0;text-align:center;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
-@media(max-width:600px){.nav-links{gap:16px}.article-header{margin-top:40px}}
+@media(max-width:600px){.nav-links{gap:16px}.article-header{margin-top:40px}.toc-box{padding:16px 18px}.related{margin-bottom:64px}.related-card{padding:16px}}
 </style></head><body>
 <header class="site-header"><div class="shell"><nav class="nav"><a class="logo" href="/"><img src="/favicon.svg" alt="logo" class="logo-img" /><span>tokosans<b>.</b></span></a><div class="nav-links"><a href="/#produk">Produk</a><a href="/blog" style="color:var(--v)">Blog</a><a href="/#faq">FAQ</a><a class="nav-cta" href="/#produk">Belanja</a></div></nav></div></header>
 <div class="shell">
@@ -74,7 +145,59 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 <div class="article-meta"><span>{formatBlogDate(post.published_at!)}</span><span>·</span><span>{readTime} menit baca</span></div>
 </div>
 {post.cover_url && <div class="article-cover"><img src={post.cover_url} alt={post.title}/></div>}
-<article class="article-content" set:html={htmlContent}/>
+{toc.length >= 2 && (
+  <nav class="toc-box" aria-label="Daftar isi artikel">
+    <div class="toc-head">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="0.6" fill="currentColor"/><circle cx="4" cy="12" r="0.6" fill="currentColor"/><circle cx="4" cy="18" r="0.6" fill="currentColor"/></svg>
+      <strong>Daftar Isi</strong>
+    </div>
+    <ol class="toc-list">
+      {tocTree.map((item) => (
+        <li class="toc-item">
+          <a href={`#${item.id}`}>{item.text}</a>
+          {item.children.length > 0 && (
+            <ol class="toc-sublist">
+              {item.children.map((sub) => (
+                <li class="toc-item sub"><a href={`#${sub.id}`}>{sub.text}</a></li>
+              ))}
+            </ol>
+          )}
+        </li>
+      ))}
+    </ol>
+  </nav>
+)}
+<article class="article-content" set:html={contentWithIds}/>
+{relatedProducts.length > 0 && (
+  <section class="related" aria-label="Produk terkait">
+    <div class="related-head">
+      <span class="related-kicker">{relatedIsMatched ? 'Sesuai artikel ini' : 'Rekomendasi untukmu'}</span>
+      <h2>{relatedIsMatched ? 'Produk Terkait' : 'Produk Pilihan'}</h2>
+    </div>
+    <div class="related-grid">
+      {relatedProducts.map((product) => {
+        const orig = product.original_price && product.original_price > product.price ? product.original_price : null;
+        const pct = orig ? Math.round(((orig - product.price) / orig) * 100) : null;
+        return (
+          <a class="related-card" href={`/checkout?product=${product.id}`}>
+            <div class="related-icon">
+              {relatedImages[product.id] ? <img src={relatedImages[product.id]} alt={product.name} loading="lazy"/> : <span>{product.icon || '⚡'}</span>}
+            </div>
+            <div class="related-body">
+              <h3>{product.name}</h3>
+              <div class="related-badges"><span class="rb rb-blue">Ready</span><span class="rb rb-green">Garansi</span></div>
+              <div class="related-price">
+                {orig && <s>{formatRupiah(orig)}</s>}
+                <strong>{formatRupiah(product.price)}</strong>
+                {pct !== null && <em>-{pct}%</em>}
+              </div>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+  </section>
+)}
 </div>
 <Footer />
 <RecentSalesToast />

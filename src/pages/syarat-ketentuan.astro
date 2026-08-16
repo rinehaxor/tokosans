@@ -1,0 +1,79 @@
+---
+import Legal from '../layouts/Legal.astro';
+
+type Section = { id: string; title: string; body: string };
+
+const sections: Section[] = [
+  {
+    id: 'pendahuluan',
+    title: '1. Pendahuluan',
+    body: `<p>Selamat datang di <strong>tokosans.</strong> Dengan mengakses, menjelajah, atau melakukan transaksi di situs kami, Anda menyatakan telah membaca, memahami, dan menyetujui Syarat &amp; Ketentuan ini. Apabila Anda tidak menyetujui sebagian atau seluruh ketentuan, mohon untuk tidak menggunakan layanan kami.</p>
+<p>Dalam dokumen ini, <strong>"tokosans."</strong> merujuk pada penyedia layanan akses akun digital premium, <strong>"Pengguna"</strong> atau <strong>"Anda"</strong> merujuk pada individu yang melakukan pemesanan, dan <strong>"Produk"</strong> merujuk pada kredensial akses (username, password, dan/atau license key) layanan digital yang kami sediakan.</p>`,
+  },
+  {
+    id: 'produk-layanan',
+    title: '2. Produk & Layanan',
+    body: `<p>Produk yang kami jual berupa akses akun layanan digital pihak ketiga, seperti namun tidak terbatas pada aplikasi produktivitas, kreativitas, streaming, dan musik. Setiap produk memiliki durasi masa aktif sesuai paket yang tertera pada halaman produk.</p>
+<p>Seluruh merek dagang dan nama layanan yang tampil di situs ini adalah milik pemilik masing-masing, dan digunakan semata-mata untuk keperluan identifikasi produk. Ketersediaan produk bergantung pada stok yang tersedia dan dapat berubah sewaktu-waktu.</p>`,
+  },
+  {
+    id: 'pemesanan-pembayaran',
+    title: '3. Pemesanan & Pembayaran',
+    body: `<p>Untuk melakukan pemesanan, Anda wajib mengisi nama dan <strong>alamat email yang aktif dan dapat diakses</strong>. Seluruh detail pesanan serta kredensial akun akan dikirimkan ke email tersebut, sehingga kesalahan penulisan email menjadi tanggung jawab Anda sendiri.</p>
+<p>Pembayaran dilakukan melalui metode yang tersedia pada halaman checkout (QRIS). Pesanan yang belum dibayar akan <strong>otomatis dibatalkan dalam 15 menit</strong>. Seluruh harga tercantum dalam Rupiah (IDR) dan dapat berubah sewaktu-waktu tanpa pemberitahuan sebelumnya. Perubahan harga tidak berlaku surut untuk pesanan yang sudah dibayar.</p>`,
+  },
+  {
+    id: 'pengiriman-akun',
+    title: '4. Pengiriman Akun',
+    body: `<p>Setelah pembayaran Anda terverifikasi, sistem kami akan <strong>secara otomatis mengirimkan kredensial akun</strong> dalam hitungan detik. Detail akun akan langsung tampil di layar Anda dan dikirimkan juga ke email pemesanan.</p>
+<p>Apabila email tidak kunjung diterima, periksa folder <strong>Spam/Promosi</strong> pada kotak masuk Anda. Jika Anda lupa menyimpan detail akun, gunakan fitur <a href="/#produk">Cek Pesanan</a> di situs kami dengan email yang digunakan saat checkout.</p>`,
+  },
+  {
+    id: 'penggunaan-akun',
+    title: '5. Kewajiban & Larangan Penggunaan Akun',
+    body: `<p>Untuk menjaga garansi tetap berlaku, Anda <strong>dilarang keras</strong> melakukan hal-hal berikut pada akun yang telah dibeli:</p>
+<ul>
+<li>Mengganti email, password, nomor telepon, atau data profil akun;</li>
+<li>Mengaktifkan verifikasi dua langkah (2FA) atau pengaman tambahan lain;</li>
+<li>Mengubah paket, rencana, atau pengaturan langganan akun;</li>
+<li>Membagikan kredensial akun kepada pihak lain dalam bentuk apa pun;</li>
+<li>Melakukan login dari banyak perangkat secara bersamaan di luar ketentuan paket;</li>
+<li>Menggunakan akun untuk aktivitas yang melanggar hukum atau ketentuan penyedia layanan.</li>
+</ul>
+<p>Pelanggaran terhadap larangan di atas dapat mengakibatkan <strong>garansi hangus</strong> dan/atau pemblokiran akses tanpa pengembalian dana.</p>`,
+  },
+  {
+    id: 'garansi',
+    title: '6. Garansi',
+    body: `<p>Seluruh produk dilindungi <strong>garansi penuh (Repair/Replace)</strong> selama masa aktif langganan berlangsung. Apabila akun mengalami kendala — misalnya tidak bisa login atau terkunci bukan karena kesalahan Anda — kami akan memperbaiki atau mengganti akun tersebut <strong>tanpa biaya tambahan</strong>.</p>
+<p>Klaim garansi diajukan melalui email <a href="mailto:hello@tokosans.id">hello@tokosans.id</a> dengan menyertakan nomor pesanan dan penjelasan kendala. Garansi tidak berlaku apabila kendala timbul akibat pelanggaran ketentuan pada bagian 5 di atas.</p>`,
+  },
+  {
+    id: 'batasan-tanggung-jawab',
+    title: '7. Batasan Tanggung Jawab',
+    body: `<p>Layanan disediakan "sebagaimana adanya". Kami tidak memberikan jaminan bahwa layanan akan bebas dari gangguan, kegagalan sistem, atau faktor di luar kendali kami (termasuk gangguan dari sisi penyedia layanan pihak ketiga).</p>
+<p>Sepanjang diizinkan oleh hukum yang berlaku, tanggung jawab kami atas segala klaim dibatasi maksimal sebesar <strong>nilai pembayaran</strong> pada pesanan yang menjadi dasar klaim. Kami tidak bertanggung jawab atas kerugian tidak langsung, kehilangan data, atau keuntungan yang hilang.</p>`,
+  },
+  {
+    id: 'perubahan-ketentuan',
+    title: '8. Perubahan Ketentuan',
+    body: `<p>Kami berhak memperbarui Syarat &amp; Ketentuan ini dari waktu ke waktu. Versi terbaru akan selalu dipublikasikan pada halaman ini beserta tanggal pembaruannya. Penggunaan situs setelah perubahan diumumkan dianggap sebagai persetujuan Anda terhadap ketentuan yang baru.</p>`,
+  },
+  {
+    id: 'hukum-kontak',
+    title: '9. Hukum yang Berlaku & Kontak',
+    body: `<p>Syarat &amp; Ketentuan ini tunduk pada hukum Negara Republik Indonesia. Segala sengketa yang timbul akan diselesaikan secara musyawarah terlebih dahulu, dan apabila tidak tercapai, melalui pengadilan yang berwenang.</p>
+<p>Pertanyaan mengenai ketentuan ini dapat disampaikan ke <a href="mailto:hello@tokosans.id">hello@tokosans.id</a>. Lihat juga <a href="/kebijakan-privasi">Kebijakan Privasi</a> dan <a href="/kebijakan-refund">Kebijakan Refund</a> kami.</p>`,
+  },
+];
+
+const metaTitle = 'Syarat & Ketentuan — tokosans.';
+const metaDescription = 'Syarat & Ketentuan layanan tokosans. — ketentuan pemesanan, pembayaran, penggunaan akun, dan garansi.';
+---
+<Legal
+  title="Syarat & Ketentuan"
+  metaTitle={metaTitle}
+  description={metaDescription}
+  updated="15 Agustus 2026"
+  sections={sections}
+/>

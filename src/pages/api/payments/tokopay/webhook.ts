@@ -4,6 +4,7 @@ import { getDefaultProductPackage, getProductPackages } from '../../../../lib/pa
 import { getProduct } from '../../../../lib/products';
 import { isTokopayCancelled, isTokopaySuccessful } from '../../../../lib/tokopay';
 import { sendAccountDeliveryEmail } from '../../../../lib/email';
+import { notifyAdminOrderPaid, notifyAdminLowStock } from '../../../../lib/wa-client';
 
 async function assignAccount(db: ReturnType<typeof getSupabaseAdmin>, orderId: string) {
   const { data: item, error: itemError } = await db.from('order_items').select('product_id,product_name').eq('order_id', orderId).limit(1).maybeSingle();
@@ -80,9 +81,48 @@ export const POST: APIRoute = async ({ request }) => {
         if (error) throw error;
         const { error: orderError } = await db.from('orders').update({ status: 'paid' }).eq('id', payment.order_id);
         if (orderError) throw orderError;
+
+        // Notifikasi WhatsApp ke admin (non-blocking — tidak menggagalkan webhook bila gagal)
+        (async () => {
+          try {
+            const [{ data: waOrder }, { data: waItem }] = await Promise.all([
+              db.from('orders').select('order_number,customer_name,total_amount').eq('id', payment.order_id).maybeSingle(),
+              db.from('order_items').select('product_name').eq('order_id', payment.order_id).limit(1).maybeSingle(),
+            ]);
+            await notifyAdminOrderPaid({
+              orderNumber: waOrder?.order_number ?? reference,
+              customerName: waOrder?.customer_name ?? 'Pelanggan',
+              productName: waItem?.product_name ?? 'Produk',
+              amount: waOrder?.total_amount ?? 0,
+            });
+          } catch (e) {
+            console.error('[WA] notify error:', e);
+          }
+        })();
       }
       const webhookAccount = await assignAccount(db, payment.order_id);
       triggerEmailDelivery(db, payment.order_id, webhookAccount).catch(e => console.error('[Email] triggerEmailDelivery error:', e));
+
+      // Notifikasi stok menipis ke admin (non-blocking — hanya saat pembayaran baru).
+      // Alert dikirim saat sisa stok mencapai threshold (cross) atau habis (0).
+      if (payment.status !== 'paid' && webhookAccount) {
+        (async () => {
+          try {
+            const { data: stockItem } = await db.from('order_items').select('product_id,product_name').eq('order_id', payment.order_id).limit(1).maybeSingle();
+            if (!stockItem?.product_id) return;
+            const { count } = await db.from('account_inventory').select('id', { count: 'exact', head: true }).eq('product_id', stockItem.product_id).eq('status', 'available');
+            const remaining = count ?? 0;
+            const threshold = Number(process.env.STOCK_LOW_THRESHOLD) || 5;
+            // remaining + 1 = stok sebelum penjualan ini. Alert hanya saat cross threshold.
+            if (remaining === 0 || (remaining <= threshold && remaining + 1 > threshold)) {
+              await notifyAdminLowStock(stockItem.product_name ?? stockItem.product_id, remaining);
+            }
+          } catch (e) {
+            console.error('[WA] low-stock alert error:', e);
+          }
+        })();
+      }
+
       return new Response('OK', { status: 200 });
     }
 

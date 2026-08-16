@@ -1,0 +1,78 @@
+---
+import Legal from '../layouts/Legal.astro';
+
+type Section = { id: string; title: string; body: string };
+
+const sections: Section[] = [
+  {
+    id: 'ringkasan',
+    title: '1. Ringkasan',
+    body: `<p>Karena produk kami berupa <strong>barang digital yang langsung terkirim</strong> setelah pembayaran terverifikasi, kebijakan pengembalian dana (refund) berlaku dalam kondisi tertentu saja. Prioritas utama kami adalah menyelesaikan setiap kendala melalui <strong>garansi Repair/Replace</strong> terlebih dahulu.</p>
+<p>Kebijakan ini merupakan bagian dari <a href="/syarat-ketentuan">Syarat &amp; Ketentuan</a> kami dan berlaku untuk seluruh transaksi di <strong>tokosans.</strong></p>`,
+  },
+  {
+    id: 'garansi-repair-replace',
+    title: '2. Garansi Repair/Replace',
+    body: `<p>Seluruh produk dilindungi garansi penuh selama masa aktif. Apabila akun mengalami kendala teknis bukan akibat pelanggaran ketentuan penggunaan, kami akan <strong>memperbaiki</strong> akun tersebut atau <strong>menggantinya dengan akun setara</strong> tanpa biaya tambahan. Penggantian dilakukan secepatnya setelah klaim diverifikasi.</p>`,
+  },
+  {
+    id: 'syarat-refund',
+    title: '3. Kondisi yang Dapat Di-refund',
+    body: `<p>Pengembalian dana dapat diajukan apabila terjadi salah satu kondisi berikut:</p>
+<ul>
+<li>Stok produk ternyata tidak tersedia setelah pembayaran Anda terverifikasi;</li>
+<li>Produk mengalami kendala dan <strong>tidak dapat diperbaiki maupun diganti</strong> dengan akun setara;</li>
+<li>Terjadi kesalahan pengiriman produk yang berbeda dari pesanan Anda dan produk belum pernah digunakan;</li>
+<li>Adanya transaksi ganda (pembayaran dobel) untuk pesanan yang sama.</li>
+</ul>`,
+  },
+  {
+    id: 'pengecualian',
+    title: '4. Kondisi yang Tidak Dapat Di-refund',
+    body: `<p>Pengembalian dana <strong>tidak dapat diajukan</strong> apabila:</p>
+<ul>
+<li>Kendala timbul akibat pelanggaran larangan penggunaan akun (misalnya mengganti password atau mengaktifkan 2FA) sehingga garansi hangus;</li>
+<li>Anda berubah pikiran setelah kredensial akun diterima;</li>
+<li>Kendala berasal dari sisi pengguna, seperti koneksi internet, perangkat, atau pembatasan dari penyedia layanan di wilayah Anda;</li>
+<li>Masa garansi produk telah berakhir;</li>
+<li>Permintaan diajukan setelah masa aktif produk habis.</li>
+</ul>`,
+  },
+  {
+    id: 'prosedur-klaim',
+    title: '5. Prosedur Klaim',
+    body: `<p>Untuk mengajukan garansi atau pengembalian dana, ikuti langkah berikut:</p>
+<ol>
+<li>Kirim email ke <a href="mailto:hello@tokosans.id">hello@tokosans.id</a> dengan subjek klaim Anda;</li>
+<li>Sertakan <strong>nomor pesanan</strong>, email pemesanan, nama produk, dan penjelasan kendala (lampirkan tangkapan layar bila ada);</li>
+<li>Tim kami akan memverifikasi klaim dan merespons dalam <strong>maksimal 1x24 jam</strong>;</li>
+<li>Penyelesaian berupa perbaikan/penggantian akun atau pengembalian dana akan kami informasikan via email.</li>
+</ol>`,
+  },
+  {
+    id: 'waktu-pengembalian',
+    title: '6. Waktu & Metode Pengembalian Dana',
+    body: `<p>Setelah klaim refund disetujui, dana akan dikembalikan dalam <strong>3–7 hari kerja</strong>, tergantung kebijakan penyedia jasa pembayaran. Pengembalian dilakukan melalui metode pembayaran awal, atau melalui transfer bank/e-wallet apabila metode awal tidak mendukung pengembalian.</p>`,
+  },
+  {
+    id: 'pembatalan-otomatis',
+    title: '7. Pesanan Belum Dibayar',
+    body: `<p>Pesanan yang belum dibayar akan <strong>otomatis dibatalkan dalam 15 menit</strong> dan tidak dikenakan biaya apa pun — Anda tidak perlu mengajukan apa pun. Apabila dana terlanjur terpotong oleh pihak bank/e-wallet untuk pesanan yang dibatalkan, dana akan kembali otomatis sesuai kebijakan penyedia pembayaran.</p>`,
+  },
+  {
+    id: 'kontak',
+    title: '8. Kontak',
+    body: `<p>Pertanyaan mengenai kebijakan ini dapat disampaikan ke <a href="mailto:hello@tokosans.id">hello@tokosans.id</a>. Kami berkomitmen menyelesaikan setiap kendala dengan adil dan secepat mungkin.</p>`,
+  },
+];
+
+const metaTitle = 'Kebijakan Refund — tokosans.';
+const metaDescription = 'Kebijakan Refund tokosans. — syarat garansi repair/replace, kondisi pengembalian dana, dan prosedur klaim.';
+---
+<Legal
+  title="Kebijakan Refund"
+  metaTitle={metaTitle}
+  description={metaDescription}
+  updated="15 Agustus 2026"
+  sections={sections}
+/>
