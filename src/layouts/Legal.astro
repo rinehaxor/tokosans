@@ -1,5 +1,6 @@
 ---
 import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
 
 interface Props {
   title: string;
@@ -62,14 +63,7 @@ const { title, metaTitle, description, updated, sections } = Astro.props;
     </style>
   </head>
   <body>
-    <header class="site-header">
-      <div class="shell">
-        <nav class="nav">
-          <a class="logo" href="/"><img src="/favicon.svg" alt="logo" class="logo-img" /><span>tokosans<b>.</b></span></a>
-          <div class="nav-links"><a href="/#produk">Produk</a><a href="/blog">Blog</a><a href="/#faq">FAQ</a><a class="nav-cta" href="/#produk">Belanja</a></div>
-        </nav>
-      </div>
-    </header>
+    <Header />
     <main class="shell">
       <div class="hero">
         <a class="hero-back" href="/">← Kembali ke toko</a><br />

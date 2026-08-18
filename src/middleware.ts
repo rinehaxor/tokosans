@@ -1,7 +1,11 @@
 import { defineMiddleware } from 'astro:middleware';
 import { ADMIN_ACCESS_COOKIE, getSupabaseAuth } from './lib/admin-auth';
+import { ensureWaClient } from './lib/wa-client';
 
 export const onRequest = defineMiddleware(async ({ url, cookies, redirect }, next) => {
+   // Pastikan socket WhatsApp admin tetap aktif (menerima perintah stok & notifikasi
+   // penjualan) walau belum ada kunjungan dashboard. Idempoten & non-blocking.
+   ensureWaClient().catch(() => {});
    const protectedPath = url.pathname === '/dashboard' || url.pathname.startsWith('/dashboard/') || url.pathname.startsWith('/api/admin/');
    const publicAdminPath = url.pathname === '/sans-portal' || url.pathname === '/api/admin/login' || url.pathname === '/api/admin/logout';
    let authenticated = false;

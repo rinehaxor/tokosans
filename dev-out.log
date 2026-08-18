@@ -1,0 +1,117 @@
+
+> tokosans@0.0.1 dev
+> astro dev
+
+[2m12.47.40[22m [34m[@astrojs/node][39m Enabling sessions with filesystem storage
+[2m12.47.40[22m [34m[types][39m Generated [2m1ms[22m
+[2m12.47.40[22m [34m[content][39m Syncing content
+[2m12.47.41[22m [34m[content][39m Synced content
+
+[42m[1m astro [22m[49m [32mv5.18.2[39m [2mready in[22m 1534 [2mms[22m
+
+[2m┃[22m Local    [36mhttp://localhost:4321/[39m
+[2m┃[22m Network  [2muse --host to expose[22m
+
+[2m12.47.41[22m [32mwatching for file changes...[39m
+[2m12.50.03[22m [33m[401][39m /api/admin/wa/status [2m779ms[22m
+[2m12.50.03[22m [33m[302][39m /dashboard/notifikasi-wa [2m126ms[22m
+[2m12.50.03[22m [33m[401][39m /api/admin/wa/status [2m1ms[22m
+[2m12.50.04[22m [34m[200][39m /sans-portal [2m230ms[22m
+[2m12.50.33[22m [33m[303][39m [33mPOST[39m /api/admin/login [2m828ms[22m
+[2m12.50.34[22m [34m[200][39m /dashboard [2m1121ms[22m
+Closing session: SessionEntry {
+  _chains: {
+    'BRuJgLKqU8+f0FOywikeeA9AVeBhBiYYqVmLRE9wAMQT': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 1385922280,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 1b 89 80 b2 aa 53 cf 9f d0 53 b2 c2 29 1e 78 0f 40 55 e0 61 06 26 18 a9 59 8b 44 4f 70 00 c4 13>,
+      privKey: <Buffer 10 17 b9 2a df c3 cb b6 1d 37 4d 22 04 34 f0 8e cc 01 4b 24 56 b2 ad 92 84 35 b1 9b df 8a 49 47>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 3d a2 ec 4b 02 23 52 d0 24 93 37 be 91 51 84 2c 91 75 eb 23 af 00 d6 fb c6 22 31 b2 86 8d 63 15>,
+    previousCounter: 0,
+    rootKey: <Buffer 3f 1c 7f c0 93 97 fe 55 bc 7d 64 b3 e7 f9 ef bf 16 c6 71 71 bc 08 c1 b6 f1 e9 37 3c 9f 9b a8 25>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 03 c3 90 a4 41 8b 79 ee 32 20 b2 e5 7c 10 b0 56 ab 97 c3 ae 5f 51 c4 c4 01 45 1c e7 e1 3f d7 37>,
+    baseKeyType: 1,
+    closed: -1,
+    used: 1787029009292,
+    created: 1787029009292,
+    remoteIdentityKey: <Buffer 05 97 be f6 92 f6 b1 a7 e8 38 b9 b6 de 7e 06 fd 47 43 7d 48 fb 03 24 4a ed 12 53 98 6b 2e 70 39 09>
+  },
+  pendingPreKey: {
+    signedKeyId: 3961728,
+    baseKey: <Buffer 05 03 c3 90 a4 41 8b 79 ee 32 20 b2 e5 7c 10 b0 56 ab 97 c3 ae 5f 51 c4 c4 01 45 1c e7 e1 3f d7 37>,
+    preKeyId: 11722074
+  }
+}
+Closing session: SessionEntry {
+  _chains: {
+    BZWAUTK55K7Ps5QikKDCmqlGD535er0hJJvxT0H0LyIT: { chainKey: [Object], chainType: 2, messageKeys: {} },
+    'BV244v6iGZ5/xz2JgBZ1UytqNlS1KHtSPwBERW1JXkcj': { chainKey: [Object], chainType: 2, messageKeys: {} },
+    BYSA6Co2MDH2v6wY9U4hydKeIcySne6giUAtjIfJWYMq: { chainKey: [Object], chainType: 2, messageKeys: {} },
+    'BeOFfpAv5ncvXH5yALTpf4B9UNJ/6bWpwdvP4A5MpcAX': { chainKey: [Object], chainType: 2, messageKeys: {} },
+    'Bf5NJamGqqzRyjJK8OTjXG5Gr6BgU5hO8+0M2znD6VRY': { chainKey: [Object], chainType: 1, messageKeys: {} }
+  },
+  registrationId: 998242991,
+  currentRatchet: {
+    ephemeralKeyPair: {
+      pubKey: <Buffer 05 fe 4d 25 a9 86 aa ac d1 ca 32 4a f0 e4 e3 5c 6e 46 af a0 60 53 98 4e f3 ed 0c db 39 c3 e9 54 58>,
+      privKey: <Buffer b0 83 5f a1 cb 94 44 eb 83 7d 38 94 e6 0d 7b 8b 12 bf 75 d7 e0 f0 ae fa aa 23 16 0c b4 63 4e 76>
+    },
+    lastRemoteEphemeralKey: <Buffer 05 e3 85 7e 90 2f e6 77 2f 5c 7e 72 00 b4 e9 7f 80 7d 50 d2 7f e9 b5 a9 c1 db cf e0 0e 4c a5 c0 17>,
+    previousCounter: 0,
+    rootKey: <Buffer 40 b1 0d ae 54 21 86 45 02 f2 80 88 26 e5 f2 8e 14 e8 0d 2d 37 07 d1 63 d7 55 94 63 bf 97 fe 8d>
+  },
+  indexInfo: {
+    baseKey: <Buffer 05 1b d2 ff 62 a4 d8 b6 e4 f9 68 ac 81 20 04 3d f7 04 48 53 e8 3c d4 60 7e 87 4a 5a 86 0c 92 0f 46>,
+    baseKeyType: 2,
+    closed: -1,
+    used: 1787031255607,
+    created: 1787024344684,
+    remoteIdentityKey: <Buffer 05 df be 0f 80 df d8 4e 68 a6 b5 1d 79 5a 92 88 67 d8 80 13 ca 25 5e 28 cb 9f 09 67 01 ff 32 5f 44>
+  }
+}
+[2m12.50.46[22m [34m[200][39m [34mPOST[39m /api/admin/wa/test [2m3910ms[22m
+[2m12.57.19[22m [34m[200][39m / [2m612ms[22m
+[2m12.57.27[22m [34m[200][39m /checkout [2m401ms[22m
+[2m12.57.38[22m [34m[200][39m /dashboard/products [2m443ms[22m
+[2m12.57.42[22m [34m[200][39m /dashboard/products/canva-pro-1m [2m291ms[22m
+[2m12.57.48[22m [34m[200][39m [34mPOST[39m /api/admin/products [2m973ms[22m
+[2m12.57.50[22m [34m[200][39m /dashboard/products [2m195ms[22m
+[2m12.57.50[22m [34m[200][39m /checkout [2m265ms[22m
+[2m12.57.52[22m [34m[200][39m /checkout [2m265ms[22m
+[2m12.57.54[22m [34m[200][39m /checkout [2m221ms[22m
+[2m12.57.57[22m [34m[200][39m /dashboard/products/canva-pro-1m [2m282ms[22m
+[2m12.58.14[22m [34m[200][39m [34mPOST[39m /api/admin/products [2m795ms[22m
+[2m12.58.16[22m [34m[200][39m /dashboard/products [2m184ms[22m
+[2m12.58.16[22m [34m[200][39m /checkout [2m233ms[22m
+[2m12.58.27[22m [33m[302][39m [33mPOST[39m /api/checkout [2m961ms[22m
+[2m12.59.24[22m [34m[200][39m /payment/UG-1787032707054-c21bc3 [2m2038ms[22m
+[2m12.59.26[22m [34m[200][39m /payment/UG-1787032707054-c21bc3 [2m2219ms[22m
+[2m12.59.28[22m [34m[200][39m /api/payments/UG-1787032707054-c21bc3/status [2m346ms[22m
+[2m12.59.33[22m [34m[200][39m /api/payments/UG-1787032707054-c21bc3/status [2m274ms[22m
+[2m12.59.37[22m [34m[200][39m /api/payments/UG-1787032707054-c21bc3/status [2m248ms[22m
+[2m12.59.42[22m [34m[200][39m /api/payments/UG-1787032707054-c21bc3/status [2m1024ms[22m
+[Email] Terkirim ke: ajivudi@gmail.com | ID: <7f8cb294-5d9e-b063-7004-3e3ec229798a@tokosans.biz.id>
+[Email] Flag email_sent diset untuk inventory ac037542-2697-4706-9858-b11fe4d8704c
+[2m13.00.53[22m [34m[200][39m /payment/UG-1787032707054-c21bc3 [2m2606ms[22m
+[2m13.00.53[22m [34m[200][39m /api/payments/UG-1787032707054-c21bc3/status [2m454ms[22m
+[2m13.01.02[22m [34m[200][39m /checkout [2m503ms[22m
+[2m13.02.27[22m [34m[200][39m /checkout [2m822ms[22m
+[2m13.07.04[22m [34m[200][39m /checkout [2m1403ms[22m
+[2m13.07.11[22m [34m[200][39m /checkout [2m817ms[22m
+[2m13.07.11[22m [34m[200][39m /checkout [2m341ms[22m
+[2m13.07.15[22m [34m[200][39m /checkout [2m424ms[22m
+[2m13.07.18[22m [34m[200][39m /checkout [2m636ms[22m
+[2m13.25.08[22m [34m[watch][39m /src/pages/checkout.astro?astro&type=style&index=0&lang.css
+[2m13.25.11[22m [34m[watch][39m /src/pages/checkout.astro?astro&type=style&index=0&lang.css
+[2m13.25.15[22m [34m[watch][39m /src/pages/checkout.astro?astro&type=style&index=0&lang.css
+[2m13.25.17[22m [34m[watch][39m /src/pages/payment/[reference].astro?astro&type=style&index=0&lang.css
+[2m13.25.21[22m [34m[watch][39m /src/pages/payment/[reference].astro?astro&type=style&index=0&lang.css
+[2m13.25.24[22m [34m[watch][39m /src/pages/payment/[reference].astro?astro&type=style&index=0&lang.css
+[2m13.25.27[22m [34m[watch][39m /src/pages/payment/[reference].astro?astro&type=style&index=0&lang.css
+[2m13.27.00[22m [34m[200][39m /checkout [2m1147ms[22m
+[2m13.27.04[22m [34m[200][39m / [2m463ms[22m

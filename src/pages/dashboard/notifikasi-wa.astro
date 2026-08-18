@@ -1,9 +1,12 @@
 ---
 import { getAdminWaNumber } from '../../lib/wa-client';
+import { getAdminCommandNumbers } from '../../lib/wa-commands';
 import ToastProvider from '../../components/ToastProvider';
 import AdminSidebar from '../../components/AdminSidebar.astro';
 const adminNumber = getAdminWaNumber();
 const adminDisplay = adminNumber ? `+${adminNumber}` : null;
+const commandNumbers = getAdminCommandNumbers();
+const commandDisplay = commandNumbers.map((n) => `+${n}`).join(', ') || null;
 ---
 <ToastProvider client:load />
 <html lang="id">
@@ -43,6 +46,12 @@ const adminDisplay = adminNumber ? `+${adminNumber}` : null;
     .msg{margin:14px 0 0;font-size:.86rem;font-weight:600;min-height:22px}
     code{background:var(--l);padding:2px 7px;border-radius:6px;font-size:.82rem;font-weight:600;color:var(--v)}
     @media(max-width:900px){.content{margin-left:0;padding:24px 20px}}
+    .cmd-list{display:flex;flex-direction:column;gap:12px;margin:4px 0 8px}
+    .cmd{display:flex;align-items:baseline;gap:12px;font-size:.86rem;flex-wrap:wrap}
+    .cmd code{flex:0 0 auto;min-width:240px}
+    .cmd span{color:var(--muted);flex:1 1 220px}
+    .cmd-note{margin:18px 0 0;font-size:.84rem;color:var(--muted);line-height:1.5}
+    .cmd-note strong{color:var(--ink)}
   </style>
 </head>
 <body>
@@ -73,6 +82,26 @@ const adminDisplay = adminNumber ? `+${adminNumber}` : null;
         <button type="button" id="test-btn" class="btn btn-success" disabled>Kirim Tes</button>
       </div>
       <p class="msg" id="wa-msg"></p>
+    </div>
+
+    {!commandDisplay && (
+      <div class="warn-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div><strong>ADMIN_WA_COMMAND_NUMBERS belum dikonfigurasi.</strong> Tambahkan di <code>.env</code> dengan format <code>ADMIN_WA_COMMAND_NUMBERS=628xxx,628yyy</code> (2 nomor atau lebih), lalu restart.</div>
+      </div>
+    )}
+    <div class="card">
+      <h2 class="card-title">Kelola Stok via WhatsApp</h2>
+      <p class="card-desc">Admin yang terdaftar bisa tambah &amp; ambil stok langsung lewat WA ke nomor ini — tanpa buka dashboard. Cocok untuk order manual.</p>
+      <p class="meta">Nomor admin perintah: <strong>{commandDisplay ?? 'belum diatur'}</strong></p>
+      <div class="cmd-list">
+        <div class="cmd"><code>tambah &lt;produk&gt; &lt;login&gt;|&lt;password&gt;</code><span>Tambah 1 akun stok (boleh beberapa baris)</span></div>
+        <div class="cmd"><code>ambil &lt;produk&gt; [jumlah]</code><span>Ambil akun untuk order manual — dibalas dengan kredensial</span></div>
+        <div class="cmd"><code>stok</code><span>Lihat sisa stok semua produk</span></div>
+        <div class="cmd"><code>stok &lt;produk&gt;</code><span>Lihat stok produk tertentu</span></div>
+        <div class="cmd"><code>menu</code><span>Lihat daftar perintah langsung dari WA</span></div>
+      </div>
+      <p class="cmd-note">Nama produk boleh ditulis sebagian (contoh: <code>canva</code>). Akun yang diambil ditandai <strong>terjual</strong> otomatis &amp; tak bisa dibeli online.</p>
     </div>
   </main>
 </div>

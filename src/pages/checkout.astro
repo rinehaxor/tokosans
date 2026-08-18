@@ -4,7 +4,8 @@ import { getProduct } from '../lib/products';
 import { getSupabaseAdmin } from '../lib/supabase';
 import { getDefaultProductPackage, getProductPackages } from '../lib/packages';
 import CheckoutButton from '../components/CheckoutButton';
-import OrderLookupModal from '../components/OrderLookupModal';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
 import RecentSalesToast from '../components/RecentSalesToast.astro';
 
 const id = Astro.url.searchParams.get('product');
@@ -155,7 +156,7 @@ const benefits = [
   </head>
   <body>
     <div class="page">
-      <div class="topbar-wrapper"><header class="shell topbar"><a class="logo" href="/"><img src="/favicon.svg" alt="logo" class="logo-img" /><span>tokosans<b>.</b></span></a><div style="display:flex;align-items:center;gap:12px;"><OrderLookupModal client:load /><a class="back" href="/#produk">← Kembali ke katalog</a></div></header></div>
+      <Header />
       <main class="shell">
         <nav class="crumb" aria-label="Breadcrumb"><a href="/">Beranda</a><span>/</span><a href="/#produk">Semua produk</a><span>/</span><strong>{product.name}</strong></nav>
         <div class="layout">
@@ -196,7 +197,7 @@ const benefits = [
           </form>
         </div>
       </main><script define:vars={{ productName: product.name, packageData: packages.map((item) => ({ id: item.id, duration: item.duration, price: item.price })) }}>document.querySelectorAll('input[name="packageId"]').forEach((input) => input.addEventListener('change', () => { const item = packageData.find((entry) => entry.id === input.value); if (!item) return; const format = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }); document.querySelector('#summary-name').textContent = `${productName} · ${item.duration}`; document.querySelector('#summary-price').textContent = format.format(item.price); document.querySelector('#summary-total').textContent = format.format(item.price); }));</script>
-      <footer class="footer"><div class="shell"><span>© 2026 <strong>tokosans.</strong> Seluruh hak cipta dilindungi.</span><span>Checkout aman · Pembayaran QRIS</span></div></footer>
+      <Footer />
       <RecentSalesToast />
     </div>
   </body>

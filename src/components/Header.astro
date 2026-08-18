@@ -1,0 +1,25 @@
+---
+import OrderLookupModal from './OrderLookupModal';
+---
+<header class="site-header">
+  <div class="nav-shell">
+    <nav class="nav" aria-label="Navigasi utama">
+      <a class="logo" href="/"><img src="/favicon.svg" alt="tokosans logo" class="logo-img" /><span>tokosans<b>.</b></span></a>
+      <div class="nav-links"><a href="/#produk">Produk</a><a href="/#manfaat">Keunggulan</a><a href="/#faq">Bantuan</a><a href="/blog">Blog</a><OrderLookupModal client:load /><a class="nav-cta" href="/#produk">Belanja sekarang</a></div>
+    </nav>
+  </div>
+</header>
+<style>
+.site-header{position:sticky;top:0;z-index:1000;background:rgba(250,248,255,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid #e8e1f2}
+.nav-shell{max-width:1180px;margin:auto;padding:0 28px}
+.nav{height:76px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:inline-flex;align-items:center;gap:10px;font:800 1.6rem 'Plus Jakarta Sans',sans-serif;letter-spacing:-1.5px;color:#1e142e;text-decoration:none}
+.logo b{color:#7048e8}
+.logo-img{width:32px;height:32px;display:block;border-radius:8px;object-fit:contain}
+.nav-links{display:flex;align-items:center;gap:24px}
+.nav-links a{color:#574d66;font-size:.9rem;font-weight:700;text-decoration:none;transition:color .18s}
+.nav-links a:hover{color:#7048e8}
+.nav-cta{display:inline-flex;align-items:center;justify-content:center;border-radius:12px;text-decoration:none;font-weight:700;transition:all .2s cubic-bezier(.34,1.56,.64,1);padding:11px 18px;background:#7048e8;color:#fff!important;box-shadow:0 6px 18px rgba(112,72,232,0.25)}
+.nav-cta:hover{background:#5932d2;transform:translateY(-2px);box-shadow:0 10px 24px rgba(112,72,232,0.35)}
+@media(max-width:640px){.nav-links{gap:14px}.nav-shell{padding:0 20px}}
+</style>

@@ -1,5 +1,7 @@
 import path from 'node:path';
 import type { WASocket } from '@whiskeysockets/baileys';
+import { handleIncomingWaMessage } from './wa-commands';
+import { waDebug } from './wa-debug';
 
 /**
  * Singleton WhatsApp client (Baileys) untuk notifikasi admin.
@@ -101,6 +103,26 @@ export async function ensureWaClient(): Promise<void> {
 
     socket.ev.on('creds.update', saveCreds);
 
+    // Dengarkan pesan masuk untuk perintah stok admin via WA (tambah/ambil stok).
+    socket.ev.on('messages.upsert', async (evt: any) => {
+      try {
+        const { messages, type } = evt ?? {};
+        waDebug('upsert', 'event type=', type, 'count=', Array.isArray(messages) ? messages.length : 'n/a');
+        if (type !== 'notify' || !Array.isArray(messages)) {
+          waDebug('upsert', 'SKIP — type bukan notify atau tidak ada messages');
+          return;
+        }
+        for (const m of messages) {
+          const k = m?.key;
+          waDebug('upsert', 'msg jid=', k?.remoteJid, 'fromMe=', k?.fromMe, 'contentKeys=', Object.keys(m?.message ?? {}));
+          await handleIncomingWaMessage(socket, m).catch((e) => waDebug('upsert', 'handler error:', e));
+        }
+      } catch (e) {
+        waDebug('upsert', 'listener error:', e);
+        console.error('[WA] messages.upsert error:', e);
+      }
+    });
+
     socket.ev.on('connection.update', (update: any) => {
       const { connection, qr, lastDisconnect } = update ?? {};
       if (qr) {
@@ -115,6 +137,7 @@ export async function ensureWaClient(): Promise<void> {
         rt.qr = null;
         rt.state = 'open';
         rt.lastConnected = new Date().toISOString();
+        waDebug('conn', 'OPEN — listener messages.upsert aktif, bot siap menerima pesan admin');
       }
       if (connection === 'close') {
         rt.socket = null;
@@ -220,30 +243,52 @@ export async function disconnectWa(): Promise<void> {
   rt.state = 'disconnected';
 }
 
-function adminJid(): string | null {
+/**
+ * Daftar JID tujuan notifikasi admin, dibaca dari env `ADMIN_WA_NOTIFY_JIDS`
+ * (dipisah koma). Mendukung campuran `@s.whatsapp.net` (nomer HP) dan `@lid`
+ * (LID privasi WhatsApp) — penting karena sebagian admin hanya LID-nya yang
+ * diketahui. Bila env kosong, fallback ke `ADMIN_WA_NUMBER@s.whatsapp.net`
+ * (kompatibilitas lama).
+ *
+ * CATATAN PENTING: jangan mengisi target dengan nomer bot sendiri — WhatsApp
+ * tidak mengantar pesan ke akun sendiri, sehingga notifikasi tak sampai ke
+ * admin mana pun (ini akar masalah lama: ADMIN_WA_NUMBER = nomer bot).
+ */
+export function getAdminNotifyJids(): string[] {
+  const raw = (process.env.ADMIN_WA_NOTIFY_JIDS || (import.meta as any).env?.ADMIN_WA_NOTIFY_JIDS || '').trim();
+  const jids = raw.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+  if (jids.length) return jids;
   const num = getAdminWaNumber();
-  return num ? `${num}@s.whatsapp.net` : null;
+  return num ? [`${num}@s.whatsapp.net`] : [];
 }
 
-/** Kirim pesan teks ke nomor admin. Aman dipanggil walau belum terhubung (no-op). */
+/**
+ * Kirim pesan teks ke SEMUA admin (daftar JID dari `getAdminNotifyJids`).
+ * Aman dipanggil walau belum terhubung (akan memicu `ensureWaClient`); bila
+ * masih belum open setelah upaya, dikembalikan false. Mengirim berurutan ke
+ * tiap JID; mengembalikan true bila minimal satu terkirim.
+ */
 export async function sendAdminNotification(text: string): Promise<boolean> {
   const rt = getRuntime();
-  const jid = adminJid();
-  if (!jid) {
-    console.warn('[WA] ADMIN_WA_NUMBER belum dikonfigurasi — notifikasi dilewati.');
+  const jids = getAdminNotifyJids();
+  if (!jids.length) {
+    console.warn('[WA] ADMIN_WA_NOTIFY_JIDS belum dikonfigurasi — notifikasi dilewati.');
     return false;
   }
   if (rt.state !== 'open' || !rt.socket) {
     await ensureWaClient();
     if (rt.state !== 'open' || !rt.socket) return false;
   }
-  try {
-    await rt.socket.sendMessage(jid, { text });
-    return true;
-  } catch (err) {
-    console.error('[WA] sendAdminNotification error:', err);
-    return false;
+  let anySent = false;
+  for (const jid of jids) {
+    try {
+      await rt.socket.sendMessage(jid, { text });
+      anySent = true;
+    } catch (err) {
+      console.error(`[WA] sendAdminNotification error ke ${jid}:`, err);
+    }
   }
+  return anySent;
 }
 
 export interface OrderPaidDetails {

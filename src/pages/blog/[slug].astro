@@ -6,6 +6,7 @@ import { getSupabaseAdmin } from '../../lib/supabase';
 import { injectHeadingIds, buildTocTree } from '../../lib/toc';
 import RecentSalesToast from '../../components/RecentSalesToast.astro';
 import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
 
 
 const { slug } = Astro.params;
@@ -137,7 +138,7 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 .footer{padding:40px 0;text-align:center;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
 @media(max-width:600px){.nav-links{gap:16px}.article-header{margin-top:40px}.toc-box{padding:16px 18px}.related{margin-bottom:64px}.related-card{padding:16px}}
 </style></head><body>
-<header class="site-header"><div class="shell"><nav class="nav"><a class="logo" href="/"><img src="/favicon.svg" alt="logo" class="logo-img" /><span>tokosans<b>.</b></span></a><div class="nav-links"><a href="/#produk">Produk</a><a href="/blog" style="color:var(--v)">Blog</a><a href="/#faq">FAQ</a><a class="nav-cta" href="/#produk">Belanja</a></div></nav></div></header>
+<Header />
 <div class="shell">
 <div class="article-header">
 <a href="/blog" class="back-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Kembali ke Blog</a>

@@ -23,5 +23,8 @@ pnpm-debug.log*
 # WhatsApp Baileys session (admin WA login state)
 wa-auth/
 
+# WhatsApp debug log (diagnostik alur pesan admin — mengandung nomor/teks perintah)
+wa-debug.log
+
 # jetbrains setting folder
 .idea/

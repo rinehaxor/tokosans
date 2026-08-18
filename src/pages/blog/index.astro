@@ -2,6 +2,7 @@
 import { getPublishedPosts, formatBlogDate, estimateReadTime } from '../../lib/blog';
 import RecentSalesToast from '../../components/RecentSalesToast.astro';
 import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
 
 let posts: Awaited<ReturnType<typeof getPublishedPosts>> = [];
 try { posts = await getPublishedPosts(); } catch {}
@@ -41,7 +42,7 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 .footer{padding:40px 0;text-align:center;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
 @media(max-width:600px){.grid{grid-template-columns:1fr}.nav-links{gap:16px}}
 </style></head><body>
-<header class="site-header"><div class="shell"><nav class="nav"><a class="logo" href="/"><img src="/favicon.svg" alt="logo" class="logo-img" /><span>tokosans<b>.</b></span></a><div class="nav-links"><a href="/#produk">Produk</a><a href="/blog" style="color:var(--v)">Blog</a><a href="/#faq">FAQ</a><a class="nav-cta" href="/#produk">Belanja</a></div></nav></div></header>
+<Header />
 <div class="shell"><div class="hero-blog"><h1>Blog</h1><p>Tips, panduan, dan info terbaru seputar layanan digital premium.</p></div>
 
 {categories.length > 0 && (
