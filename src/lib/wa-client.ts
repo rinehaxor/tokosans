@@ -125,7 +125,13 @@ export async function ensureWaClient(): Promise<void> {
       const { useMultiFileAuthState, fetchLatestBaileysVersion, DisconnectReason, Browsers } = baileys;
 
       const { state: authState, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
-      const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: [2, 3000, 1015901307] as any }));
+      
+      const fetchVersionWithTimeout = Promise.race([
+        fetchLatestBaileysVersion(),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('fetchLatestBaileysVersion timeout')), 4000)),
+      ]).catch(() => ({ version: [2, 3000, 1015901307] as any }));
+
+      const { version } = await fetchVersionWithTimeout;
 
       rt.state = 'connecting';
       rt.qr = null;
