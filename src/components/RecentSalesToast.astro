@@ -16,29 +16,29 @@ try {
 } catch {}
 
 const defaultItems = [
-  { id: 'chatgpt-plus', name: 'Chat GPT plus', price: 150000, original_price: 445000, icon: '🤖' },
-  { id: 'canva-pro-1m', name: 'Canva Pro', duration: '1 Bulan', price: 1000, original_price: 2000, icon: '✦' },
-  { id: 'capcut-pro-1m', name: 'CapCut Pro', duration: '1 Bulan', price: 18000, original_price: 29000, icon: '◈' },
+  { id: 'chatgpt-plus', name: 'Chat GPT plus', price: 150000, original_price: 445000, icon: 'AI' },
+  { id: 'canva-pro-1m', name: 'Canva Pro', duration: '1 Bulan', price: 1000, original_price: 2000, icon: 'C' },
+  { id: 'capcut-pro-1m', name: 'CapCut Pro', duration: '1 Bulan', price: 18000, original_price: 29000, icon: 'CP' },
   { id: 'netflix-1m', name: 'Netflix Premium', duration: 'Ultra HD', price: 35000, original_price: 56000, icon: 'N' },
-  { id: 'spotify-1m', name: 'Spotify Premium', duration: '1 Bulan', price: 20000, original_price: 32000, icon: '♫' },
-  { id: 'youtube-1m', name: 'YouTube Premium', duration: '1 Bulan', price: 15000, original_price: 60000, icon: '▶' },
-  { id: 'claude-pro-1m', name: 'Claude Pro', duration: '1 Bulan', price: 150000, original_price: 400000, icon: '✦' },
-  { id: 'prime-video-1m', name: 'Prime Video', duration: '1 Bulan', price: 22000, original_price: 35000, icon: '▶' },
+  { id: 'spotify-1m', name: 'Spotify Premium', duration: '1 Bulan', price: 20000, original_price: 32000, icon: 'S' },
+  { id: 'youtube-1m', name: 'YouTube Premium', duration: '1 Bulan', price: 15000, original_price: 60000, icon: 'YT' },
+  { id: 'claude-pro-1m', name: 'Claude Pro', duration: '1 Bulan', price: 150000, original_price: 400000, icon: 'CL' },
+  { id: 'prime-video-1m', name: 'Prime Video', duration: '1 Bulan', price: 22000, original_price: 35000, icon: 'PV' },
   { id: 'wetv-vip-1m', name: 'WeTV VIP', duration: '1 Bulan', price: 17000, original_price: 27000, icon: 'W' }
 ];
 
 function getBrandTheme(name: string) {
   const n = name.toLowerCase();
-  if (n.includes('gpt') || n.includes('chatgpt')) return { iconText: '🤖', iconBg: '#10a37f' };
-  if (n.includes('canva')) return { iconText: '✦', iconBg: 'linear-gradient(135deg, #7048e8, #8c64f7)' };
-  if (n.includes('capcut')) return { iconText: '◈', iconBg: '#18181b' };
+  if (n.includes('gpt') || n.includes('chatgpt')) return { iconText: 'AI', iconBg: '#10a37f' };
+  if (n.includes('canva')) return { iconText: 'C', iconBg: 'linear-gradient(135deg, #7048e8, #8c64f7)' };
+  if (n.includes('capcut')) return { iconText: 'CP', iconBg: '#18181b' };
   if (n.includes('netflix')) return { iconText: 'N', iconBg: '#e50914' };
-  if (n.includes('spotify')) return { iconText: '♫', iconBg: '#1db954' };
-  if (n.includes('youtube')) return { iconText: '▶', iconBg: '#ff0000' };
-  if (n.includes('claude')) return { iconText: '✦', iconBg: '#d97706' };
-  if (n.includes('prime')) return { iconText: '▶', iconBg: '#00a8e1' };
+  if (n.includes('spotify')) return { iconText: 'S', iconBg: '#1db954' };
+  if (n.includes('youtube')) return { iconText: 'YT', iconBg: '#ff0000' };
+  if (n.includes('claude')) return { iconText: 'CL', iconBg: '#d97706' };
+  if (n.includes('prime')) return { iconText: 'PV', iconBg: '#00a8e1' };
   if (n.includes('wetv')) return { iconText: 'W', iconBg: '#ff6000' };
-  return { iconText: '✦', iconBg: 'linear-gradient(135deg, #7048e8, #5b34d1)' };
+  return { iconText: 'TS', iconBg: 'linear-gradient(135deg, #7048e8, #5b34d1)' };
 }
 
 const rawList = dbProducts.length ? dbProducts : defaultItems;
@@ -48,7 +48,7 @@ const toastProducts = rawList.map((p) => {
   const price = p.price ?? 0;
   const origPrice = p.original_price && p.original_price > price ? p.original_price : Math.round(price * 1.6);
   const diff = Math.max(0, origPrice - price);
-  const savingsText = diff > 0 ? `🔥 Hemat ${formatRupiah(diff)}` : '';
+  const savingsText = diff > 0 ? `Hemat ${formatRupiah(diff)}` : '';
   const theme = getBrandTheme(p.name);
   return {
     id: p.id,
@@ -66,7 +66,7 @@ const toastProducts = rawList.map((p) => {
   <div class="sales-toast-card">
     <div class="sales-toast-icon" id="sales-toast-icon-bg">
       <img id="sales-toast-img" class="sales-toast-img" src="" alt="" style="display: none;" />
-      <span id="sales-toast-icon-text">🤖</span>
+      <span id="sales-toast-icon-text">TS</span>
       <span class="sales-toast-verified" title="Transaksi Terverifikasi">✓</span>
     </div>
     <div class="sales-toast-content">
@@ -78,7 +78,7 @@ const toastProducts = rawList.map((p) => {
         Membeli <a href="/#produk" class="sales-toast-link" id="sales-toast-product-name">Prime Video 1 Bulan</a>
       </div>
       <div class="sales-toast-savings-badge" id="sales-toast-savings">
-        🔥 Hemat Rp13.000
+        Hemat Rp13.000
       </div>
     </div>
     <button type="button" class="sales-toast-close" id="sales-toast-close-btn" aria-label="Tutup">&times;</button>
@@ -329,7 +329,7 @@ const toastProducts = rawList.map((p) => {
       } else {
         prodEl.href = '/#produk';
       }
-      savEl.textContent = prod.savings || '🔥 Promo Terbatas';
+      savEl.textContent = prod.savings || 'Promo Spesial';
 
       // Gambar Produk vs Icon Brand
       if (prod.image_url && imgEl) {

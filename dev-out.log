@@ -1,0 +1,41 @@
+[2m14.28.52[22m [34m[@astrojs/node][39m Enabling sessions with filesystem storage
+[2m14.28.52[22m [34m[types][39m Generated [2m1ms[22m
+[2m14.28.52[22m [34m[content][39m Syncing content
+[2m14.28.52[22m [34m[content][39m Synced content
+[2m14.28.52[22m [34m[vite][39m Re-optimizing dependencies because vite config has changed
+
+[42m[1m astro [22m[49m [32mv5.18.2[39m [2mready in[22m 444 [2mms[22m
+
+[2m┃[22m Local    [36mhttp://localhost:4321/[39m
+[2m┃[22m Network  [2muse --host to expose[22m
+
+[2m14.28.52[22m [32mwatching for file changes...[39m
+[2m14.28.55[22m [34m[200][39m /api/admin/wa/status [2m1505ms[22m
+[2m14.28.55[22m [34m[200][39m /dashboard/notifikasi-wa [2m699ms[22m
+[2m14.28.55[22m [34m[200][39m /api/admin/wa/status [2m133ms[22m
+[2m14.28.57[22m [34m[200][39m /api/admin/wa/status [2m121ms[22m
+[WA-debug] [2026-08-18T07:28:58.471Z] [conn] QR Code baru di-generate
+[2m14.29.00[22m [34m[200][39m /api/admin/wa/status [2m1381ms[22m
+[2m14.29.02[22m [34m[200][39m /api/admin/wa/status [2m81ms[22m
+[2m14.29.05[22m [34m[200][39m /api/admin/wa/status [2m64ms[22m
+[2m14.29.09[22m [34m[200][39m /api/admin/wa/status [2m76ms[22m
+[2m14.29.12[22m [34m[200][39m /api/admin/wa/status [2m63ms[22m
+[2m14.29.15[22m [34m[200][39m /api/admin/wa/status [2m65ms[22m
+[2m14.29.18[22m [34m[200][39m /api/admin/wa/status [2m62ms[22m
+[2m14.29.21[22m [34m[200][39m /api/admin/wa/status [2m64ms[22m
+[2m14.29.24[22m [34m[200][39m /api/admin/wa/status [2m68ms[22m
+[2m14.29.27[22m [34m[200][39m /api/admin/wa/status [2m62ms[22m
+[2m14.29.30[22m [34m[200][39m /api/admin/wa/status [2m64ms[22m
+[2m14.29.33[22m [34m[200][39m /api/admin/wa/status [2m65ms[22m
+[2m14.29.36[22m [34m[200][39m /api/admin/wa/status [2m61ms[22m
+[2m14.29.39[22m [34m[200][39m /api/admin/wa/status [2m60ms[22m
+[2m14.29.42[22m [34m[200][39m /api/admin/wa/status [2m63ms[22m
+[2m14.29.45[22m [34m[200][39m /api/admin/wa/status [2m76ms[22m
+[2m14.29.48[22m [34m[200][39m /api/admin/wa/status [2m70ms[22m
+[2m14.29.51[22m [34m[200][39m /api/admin/wa/status [2m74ms[22m
+[2m14.29.53[22m [34m[200][39m /api/admin/wa/status [2m67ms[22m
+[2m14.29.56[22m [34m[200][39m /api/admin/wa/status [2m76ms[22m
+[WA-debug] [2026-08-18T07:29:58.480Z] [conn] QR Code baru di-generate
+[2m14.29.59[22m [34m[200][39m /api/admin/wa/status [2m127ms[22m
+[2m14.30.02[22m [34m[200][39m /api/admin/wa/status [2m96ms[22m
+[2m14.30.05[22m [34m[200][39m /api/admin/wa/status [2m63ms[22m

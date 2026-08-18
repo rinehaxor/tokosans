@@ -1,25 +1,173 @@
 ---
 import OrderLookupModal from './OrderLookupModal';
+
+interface Props {
+  activeNav?: 'home' | 'produk' | 'manfaat' | 'cara-kerja' | 'faq' | 'blog';
+}
+
+const { activeNav } = Astro.props;
 ---
-<header class="site-header">
-  <div class="nav-shell">
-    <nav class="nav" aria-label="Navigasi utama">
-      <a class="logo" href="/"><img src="/favicon.svg" alt="tokosans logo" class="logo-img" /><span>tokosans<b>.</b></span></a>
-      <div class="nav-links"><a href="/#produk">Produk</a><a href="/#manfaat">Keunggulan</a><a href="/#faq">Bantuan</a><a href="/blog">Blog</a><OrderLookupModal client:load /><a class="nav-cta" href="/#produk">Belanja sekarang</a></div>
+
+<header class="site-header" id="site-header">
+  <div class="header-shell">
+    <nav class="header-nav" aria-label="Navigasi Utama">
+      <a class="header-logo" href="/" aria-label="tokosans. Beranda">
+        <img src="/favicon.svg" alt="tokosans logo" class="header-logo-img" width="32" height="32" />
+        <span class="header-logo-text">tokosans<b>.</b></span>
+      </a>
+
+      <div class="header-links desktop-only">
+        <a href="/#produk" class:list={{ active: activeNav === 'produk' }}>Produk</a>
+        <a href="/#manfaat" class:list={{ active: activeNav === 'manfaat' }}>Keunggulan</a>
+        <a href="/#cara-kerja" class:list={{ active: activeNav === 'cara-kerja' }}>Cara Kerja</a>
+        <a href="/#faq" class:list={{ active: activeNav === 'faq' }}>Bantuan</a>
+        <a href="/blog" class:list={{ active: activeNav === 'blog' }}>Blog</a>
+      </div>
+
+      <div class="header-actions desktop-only">
+        <OrderLookupModal client:load />
+        <a class="header-cta" href="/#produk">
+          <span>Belanja sekarang</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="header-mobile-bar mobile-only">
+        <OrderLookupModal client:load />
+        <button type="button" class="mobile-menu-btn" id="mobile-menu-toggle" aria-label="Menu navigasi" aria-expanded="false">
+          <span class="burger-bar"></span>
+          <span class="burger-bar"></span>
+          <span class="burger-bar"></span>
+        </button>
+      </div>
     </nav>
   </div>
+
+  <div class="mobile-drawer" id="mobile-nav-drawer" aria-hidden="true">
+    <div class="mobile-drawer-inner">
+      <div class="mobile-links">
+        <a href="/#produk" class="mobile-link"><span>Koleksi Produk</span></a>
+        <a href="/#manfaat" class="mobile-link"><span>Keunggulan</span></a>
+        <a href="/#cara-kerja" class="mobile-link"><span>Cara Kerja</span></a>
+        <a href="/#faq" class="mobile-link"><span>Pusat Bantuan</span></a>
+        <a href="/blog" class="mobile-link"><span>Blog &amp; Panduan</span></a>
+      </div>
+      <div class="mobile-drawer-cta">
+        <a class="mobile-cta-btn" href="/#produk"><span>Mulai Belanja Sekarang</span></a>
+      </div>
+    </div>
+  </div>
+  <div class="mobile-backdrop" id="mobile-menu-backdrop"></div>
 </header>
+
 <style>
-.site-header{position:sticky;top:0;z-index:1000;background:rgba(250,248,255,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid #e8e1f2}
-.nav-shell{max-width:1180px;margin:auto;padding:0 28px}
-.nav{height:76px;display:flex;align-items:center;justify-content:space-between}
-.logo{display:inline-flex;align-items:center;gap:10px;font:800 1.6rem 'Plus Jakarta Sans',sans-serif;letter-spacing:-1.5px;color:#1e142e;text-decoration:none}
-.logo b{color:#7048e8}
-.logo-img{width:32px;height:32px;display:block;border-radius:8px;object-fit:contain}
-.nav-links{display:flex;align-items:center;gap:24px}
-.nav-links a{color:#574d66;font-size:.9rem;font-weight:700;text-decoration:none;transition:color .18s}
-.nav-links a:hover{color:#7048e8}
-.nav-cta{display:inline-flex;align-items:center;justify-content:center;border-radius:12px;text-decoration:none;font-weight:700;transition:all .2s cubic-bezier(.34,1.56,.64,1);padding:11px 18px;background:#7048e8;color:#fff!important;box-shadow:0 6px 18px rgba(112,72,232,0.25)}
-.nav-cta:hover{background:#5932d2;transform:translateY(-2px);box-shadow:0 10px 24px rgba(112,72,232,0.35)}
-@media(max-width:640px){.nav-links{gap:14px}.nav-shell{padding:0 20px}}
+  .site-header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: rgba(253, 252, 255, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid #e8e1f2;
+  }
+  .header-shell { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .header-nav { height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .header-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; user-select: none; flex-shrink: 0; }
+  .header-logo-img { width: 32px; height: 32px; display: block; border-radius: 9px; object-fit: contain; }
+  .header-logo-text { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.55rem; font-weight: 800; letter-spacing: -1.5px; color: #1e142e; line-height: 1; }
+  .header-logo-text b { color: #7048e8; }
+  .header-links { display: flex; align-items: center; gap: 26px; }
+  .header-links a { color: #574d66; font-size: 0.9rem; font-weight: 700; text-decoration: none; padding: 6px 2px; transition: color 0.18s; }
+  .header-links a:hover, .header-links a.active { color: #7048e8; }
+  .header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .header-cta { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; background: #7048e8; color: #fff !important; border-radius: 12px; text-decoration: none; font-size: 0.88rem; font-weight: 700; box-shadow: 0 4px 14px rgba(112, 72, 232, 0.28); transition: all 0.2s; }
+  .header-cta:hover { background: #5932d2; transform: translateY(-1.5px); box-shadow: 0 8px 22px rgba(112, 72, 232, 0.38); }
+  .header-mobile-bar { display: none; align-items: center; gap: 8px; }
+  .mobile-menu-btn { display: inline-flex; flex-direction: column; justify-content: center; align-items: center; width: 38px; height: 38px; background: #fff; border: 1.5px solid #e8e1f2; border-radius: 10px; cursor: pointer; gap: 4px; }
+  .mobile-menu-btn:hover { background: #f4f0ff; }
+  .burger-bar { display: block; width: 18px; height: 2px; background: #1e142e; border-radius: 2px; transition: transform 0.2s ease, opacity 0.2s ease; }
+  .mobile-menu-btn.is-active .burger-bar:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+  .mobile-menu-btn.is-active .burger-bar:nth-child(2) { opacity: 0; }
+  .mobile-menu-btn.is-active .burger-bar:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+  .mobile-drawer { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border-bottom: 1px solid #e8e1f2; box-shadow: 0 16px 36px rgba(30, 20, 46, 0.12); overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease; z-index: 999; }
+  .mobile-drawer.is-open { max-height: 480px; opacity: 1; }
+  .mobile-drawer-inner { padding: 16px 20px 22px; display: flex; flex-direction: column; gap: 14px; }
+  .mobile-links { display: flex; flex-direction: column; gap: 4px; }
+  .mobile-link { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 10px; text-decoration: none; color: #1e142e; font-size: 0.94rem; font-weight: 600; transition: background 0.15s ease, color 0.15s ease; }
+  .mobile-link:hover { background: #f4f0ff; color: #7048e8; }
+  .mobile-drawer-cta { padding-top: 10px; border-top: 1px solid #f0ecff; }
+  .mobile-cta-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; background: #7048e8; color: #fff !important; border-radius: 12px; text-decoration: none; font-size: 0.94rem; font-weight: 800; }
+  .mobile-backdrop { display: none; position: fixed; top: 73px; left: 0; right: 0; bottom: 0; background: rgba(30, 20, 46, 0.45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+  .mobile-backdrop.is-open { opacity: 1; pointer-events: auto; }
+  @media (min-width: 861px) { .mobile-only { display: none !important; } }
+  @media (max-width: 860px) {
+    .desktop-only { display: none !important; }
+    .header-mobile-bar { display: inline-flex; }
+    .mobile-drawer, .mobile-backdrop { display: block; }
+    .header-nav { height: 64px; }
+    .header-shell { padding: 0 16px; }
+    .header-logo-text { font-size: 1.35rem; }
+  }
+  @media (max-width: 400px) { .header-logo-text { font-size: 1.2rem; } .header-nav { gap: 6px; } }
 </style>
+
+<script>
+  function initMobileHeader() {
+    const toggleBtn = document.getElementById('mobile-menu-toggle');
+    const drawer = document.getElementById('mobile-nav-drawer');
+    const backdrop = document.getElementById('mobile-menu-backdrop');
+    if (!toggleBtn || !drawer || !backdrop) return;
+
+    let isOpen = false;
+
+    function openMenu() {
+      isOpen = true;
+      toggleBtn?.classList.add('is-active');
+      toggleBtn?.setAttribute('aria-expanded', 'true');
+      drawer?.classList.add('is-open');
+      drawer?.setAttribute('aria-hidden', 'false');
+      backdrop?.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMenu() {
+      isOpen = false;
+      toggleBtn?.classList.remove('is-active');
+      toggleBtn?.setAttribute('aria-expanded', 'false');
+      drawer?.classList.remove('is-open');
+      drawer?.setAttribute('aria-hidden', 'true');
+      backdrop?.classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+
+    toggleBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (isOpen) closeMenu();
+      else openMenu();
+    };
+
+    backdrop.onclick = () => {
+      closeMenu();
+    };
+
+    drawer.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        closeMenu();
+      });
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen) closeMenu();
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 860 && isOpen) closeMenu();
+    });
+  }
+
+  initMobileHeader();
+  document.addEventListener('astro:page-load', initMobileHeader);
+</script>
+

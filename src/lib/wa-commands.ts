@@ -3,6 +3,38 @@ import { getProducts, type ManagedProduct } from './products';
 import { getProductPackages, getDefaultProductPackage } from './packages';
 import { getSupabaseAdmin } from './supabase';
 import { waDebug } from './wa-debug';
+import { getRuntime } from './wa-client';
+
+/**
+ * Kirim balasan WhatsApp dengan fallback ke socket runtime aktif jika socket awal stale.
+ */
+async function sendReplyWithFallback(initialSocket: WASocket, jid: string, text: string): Promise<void> {
+  try {
+    await initialSocket.sendMessage(jid, { text });
+    waDebug('handler', 'balasan terkirim via initial socket ke', jid);
+    return;
+  } catch (initialErr) {
+    waDebug('handler', 'Gagal kirim balasan via initial socket, mencoba runtime socket fallback...', initialErr);
+  }
+
+  // Fallback: ambil socket terbaru dari global runtime
+  const startTime = Date.now();
+  while (Date.now() - startTime < 8000) {
+    const rt = getRuntime();
+    if (rt.state === 'open' && rt.socket) {
+      try {
+        await rt.socket.sendMessage(jid, { text });
+        waDebug('handler', 'balasan terkirim via fallback runtime socket ke', jid);
+        return;
+      } catch (retryErr) {
+        waDebug('handler', 'Retry kirim balasan fallback error:', retryErr);
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+
+  throw new Error(`Gagal mengirim balasan ke ${jid} setelah retry fallback.`);
+}
 
 /**
  * Modul perintah stok via WhatsApp.
@@ -154,8 +186,7 @@ export async function handleIncomingWaMessage(socket: WASocket, msg: any): Promi
     const reply = await runCommand(text);
     waDebug('handler', 'runCommand reply length=', reply ? reply.length : 0);
     if (reply) {
-      await socket.sendMessage(jid as string, { text: reply });
-      waDebug('handler', 'balasan terkirim ke', jid);
+      await sendReplyWithFallback(socket, jid as string, reply);
     } else {
       waDebug('handler', 'tidak ada balasan (runCommand return kosong)');
     }

@@ -74,12 +74,6 @@ if (relatedProducts.length > 0) {
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif}
 h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 .shell{max-width:1180px;margin:auto;padding:0 28px}
-.site-header{position:sticky;top:0;z-index:1000;background:rgba(253,252,255,0.88);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.nav{height:76px;display:flex;align-items:center;justify-content:space-between}
-.logo{display:flex;align-items:center;gap:10px;font:800 1.55rem 'Plus Jakarta Sans';letter-spacing:-1.5px;color:var(--ink);text-decoration:none}.logo b{color:var(--v)}
-.logo-img{width:32px;height:32px;border-radius:8px;object-fit:contain}
-.nav-links{display:flex;align-items:center;gap:27px}.nav-links a{color:#5f566a;font-size:.9rem;font-weight:700;text-decoration:none}
-.nav-cta{padding:11px 16px;background:var(--ink);color:#fff!important;display:inline-flex;align-items:center;border-radius:12px;text-decoration:none;font-weight:700}
 .article-header{max-width:760px;margin:60px auto 0;text-align:center}
 .article-header h1{font-size:clamp(1.8rem,3.5vw,2.8rem);margin:0 0 16px;line-height:1.2}
 .article-meta{display:flex;align-items:center;justify-content:center;gap:14px;font-size:.88rem;color:var(--muted);font-weight:600;margin-bottom:32px}
@@ -135,10 +129,9 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
 .content-img{max-width:100%;border-radius:12px;margin:16px 0}
 .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--v);font-weight:700;font-size:.9rem;text-decoration:none;margin-bottom:20px}
 .back-link:hover{text-decoration:underline}
-.footer{padding:40px 0;text-align:center;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line)}
-@media(max-width:600px){.nav-links{gap:16px}.article-header{margin-top:40px}.toc-box{padding:16px 18px}.related{margin-bottom:64px}.related-card{padding:16px}}
+@media(max-width:600px){.article-header{margin-top:40px}.toc-box{padding:16px 18px}.related{margin-bottom:64px}.related-card{padding:16px}}
 </style></head><body>
-<Header />
+<Header activeNav="blog" />
 <div class="shell">
 <div class="article-header">
 <a href="/blog" class="back-link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>Kembali ke Blog</a>

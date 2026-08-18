@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import type { WASocket } from '@whiskeysockets/baileys';
 import { handleIncomingWaMessage } from './wa-commands';
 import { waDebug } from './wa-debug';
@@ -27,16 +28,28 @@ export interface WaStatus {
 
 const AUTH_DIR = path.resolve(process.cwd(), 'wa-auth');
 
-interface WaRuntime {
+function clearAuthDir(): void {
+  try {
+    if (fs.existsSync(AUTH_DIR)) {
+      fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+      waDebug('auth', 'Folder wa-auth berhasil dibersihkan');
+    }
+  } catch (err) {
+    console.error('[WA] Gagal membersihkan folder wa-auth:', err);
+  }
+}
+
+export interface WaRuntime {
   socket: WASocket | null;
   state: WaState;
   qr: string | null;
   lastConnected: string | null;
-  starting: boolean;
+  connectingPromise: Promise<void> | null;
   reconnectTimer: NodeJS.Timeout | null;
+  lastCloseCode: number | null;
 }
 
-function getRuntime(): WaRuntime {
+export function getRuntime(): WaRuntime {
   const g = globalThis as Record<string, unknown>;
   if (!g.__tokosansWa) {
     g.__tokosansWa = {
@@ -44,8 +57,9 @@ function getRuntime(): WaRuntime {
       state: 'disconnected',
       qr: null,
       lastConnected: null,
-      starting: false,
+      connectingPromise: null,
       reconnectTimer: null,
+      lastCloseCode: null,
     } as WaRuntime;
   }
   return g.__tokosansWa as WaRuntime;
@@ -73,29 +87,59 @@ export function getAdminWaNumber(): string | null {
   return digits.length >= 8 ? digits : null;
 }
 
-/** Mulai koneksi WA (idempoten — aman dipanggil berulang). */
+/** Bersihkan socket yang sedang aktif atau dangling */
+function cleanupExistingSocket(rt: WaRuntime): void {
+  if (rt.reconnectTimer) {
+    clearTimeout(rt.reconnectTimer);
+    rt.reconnectTimer = null;
+  }
+  if (rt.socket) {
+    try {
+      rt.socket.ev.removeAllListeners('connection.update');
+      rt.socket.ev.removeAllListeners('creds.update');
+      rt.socket.ev.removeAllListeners('messages.upsert');
+      rt.socket.end(undefined);
+    } catch (_) {}
+    rt.socket = null;
+  }
+}
+
+/** Mulai koneksi WA (idempoten — single flight). */
 export async function ensureWaClient(): Promise<void> {
   const rt = getRuntime();
-  if (rt.socket || rt.starting) return;
-  rt.starting = true;
-  try {
-    const baileys = await import('@whiskeysockets/baileys');
-    const makeWASocket = baileys.default;
-    const { useMultiFileAuthState, fetchLatestBaileysVersion, DisconnectReason } = baileys;
 
-    const { state: authState, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
-    const { version } = await fetchLatestBaileysVersion();
+  if (rt.state === 'open' && rt.socket) return;
+  if (rt.connectingPromise) return rt.connectingPromise;
 
-    rt.state = 'connecting';
-    rt.qr = null;
+  if (rt.reconnectTimer) {
+    clearTimeout(rt.reconnectTimer);
+    rt.reconnectTimer = null;
+  }
+
+  rt.connectingPromise = (async () => {
+    try {
+      cleanupExistingSocket(rt);
+
+      const baileys = await import('@whiskeysockets/baileys');
+      const makeWASocket = baileys.default;
+      const { useMultiFileAuthState, fetchLatestBaileysVersion, DisconnectReason, Browsers } = baileys;
+
+      const { state: authState, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
+      const { version } = await fetchLatestBaileysVersion().catch(() => ({ version: [2, 3000, 1015901307] as any }));
+
+      rt.state = 'connecting';
+      rt.qr = null;
 
     const socket = makeWASocket({
       version,
       auth: authState,
       logger: silentLogger as any,
       printQRInTerminal: false,
-      browser: ['tokosans-admin', 'Chrome', '1.0.0'],
-      connectTimeoutMs: 20_000,
+      browser: Browsers.ubuntu('Chrome'),
+      syncFullHistory: false,
+      connectTimeoutMs: 60_000,
+      defaultQueryTimeoutMs: 60_000,
+      keepAliveIntervalMs: 25_000,
       markOnlineOnConnect: false,
     });
 
@@ -128,40 +172,64 @@ export async function ensureWaClient(): Promise<void> {
       if (qr) {
         rt.qr = qr;
         rt.state = 'qr';
+        rt.starting = false;
+        waDebug('conn', 'QR Code baru di-generate');
       }
       if (connection === 'connecting') {
-        rt.state = 'connecting';
-        rt.qr = null;
+        rt.state = rt.qr ? 'qr' : 'connecting';
       }
       if (connection === 'open') {
         rt.qr = null;
         rt.state = 'open';
         rt.lastConnected = new Date().toISOString();
+        rt.lastCloseCode = null;
         waDebug('conn', 'OPEN — listener messages.upsert aktif, bot siap menerima pesan admin');
       }
       if (connection === 'close') {
-        rt.socket = null;
-        rt.qr = null;
         const code: number | undefined = lastDisconnect?.error?.output?.statusCode;
-        const loggedOut = code === DisconnectReason.loggedOut;
+        rt.lastCloseCode = code ?? null;
+        const loggedOut = code === DisconnectReason.loggedOut || code === 401 || code === 403;
+        const isConflict = code === DisconnectReason.connectionReplaced || code === 440;
+
+        waDebug('conn', `CLOSE code=${code ?? 'unknown'}, loggedOut=${loggedOut}, isConflict=${isConflict}`);
+
+        if (rt.socket === socket) {
+          rt.socket = null;
+        }
+        rt.qr = null;
         rt.state = loggedOut ? 'disconnected' : 'closed';
-        rt.starting = false;
 
         if (rt.reconnectTimer) clearTimeout(rt.reconnectTimer);
-        // Reconnect otomatis untuk penutupan transien (bukan logout manual).
-        if (!loggedOut) {
+
+        if (loggedOut) {
+          clearAuthDir();
+          rt.reconnectTimer = setTimeout(() => {
+            rt.reconnectTimer = null;
+            ensureWaClient().catch((e) => console.error('[WA] reset-after-logout error:', e));
+          }, 1000);
+        } else if (isConflict) {
+          waDebug('conn', 'Connection conflict (440) — menahan auto-reconnect cepat');
+          rt.reconnectTimer = setTimeout(() => {
+            rt.reconnectTimer = null;
+            ensureWaClient().catch((e) => console.error('[WA] conflict-reconnect error:', e));
+          }, 10000);
+        } else {
           rt.reconnectTimer = setTimeout(() => {
             rt.reconnectTimer = null;
             ensureWaClient().catch((e) => console.error('[WA] auto-reconnect error:', e));
-          }, 4000);
+          }, 5000);
         }
       }
     });
   } catch (err) {
     console.error('[WA] ensureWaClient error:', err);
     rt.state = 'disconnected';
-    rt.starting = false;
+  } finally {
+    rt.connectingPromise = null;
   }
+  })();
+
+  return rt.connectingPromise;
 }
 
 export function getWaStatus(): WaStatus {
@@ -200,19 +268,7 @@ export async function getQrDataUrl(): Promise<string | null> {
 /** Putuskan socket TANPA logout (untuk reconnect pakai session lama). */
 export async function reconnectWa(): Promise<void> {
   const rt = getRuntime();
-  if (rt.reconnectTimer) {
-    clearTimeout(rt.reconnectTimer);
-    rt.reconnectTimer = null;
-  }
-  if (rt.socket) {
-    try {
-      rt.socket.end(undefined as any);
-    } catch {
-      /* ignore */
-    }
-    rt.socket = null;
-  }
-  rt.starting = false;
+  cleanupExistingSocket(rt);
   rt.qr = null;
   rt.state = 'disconnected';
   await ensureWaClient();
@@ -221,26 +277,20 @@ export async function reconnectWa(): Promise<void> {
 /** Logout penuh — invalidate session (admin harus scan QR lagi untuk connect). */
 export async function disconnectWa(): Promise<void> {
   const rt = getRuntime();
-  if (rt.reconnectTimer) {
-    clearTimeout(rt.reconnectTimer);
-    rt.reconnectTimer = null;
-  }
-  rt.starting = false;
   if (rt.socket) {
     try {
       await rt.socket.logout();
     } catch {
       /* ignore */
     }
-    try {
-      rt.socket.end(undefined as any);
-    } catch {
-      /* ignore */
-    }
-    rt.socket = null;
   }
+  cleanupExistingSocket(rt);
+  clearAuthDir();
   rt.qr = null;
+  rt.lastConnected = null;
   rt.state = 'disconnected';
+  // Langsung inisialisasi sesi baru yang bersih sehingga QR code langsung ter-generate untuk dashboard
+  await ensureWaClient();
 }
 
 /**
@@ -271,20 +321,42 @@ export function getAdminNotifyJids(): string[] {
 export async function sendAdminNotification(text: string): Promise<boolean> {
   const rt = getRuntime();
   const jids = getAdminNotifyJids();
+  waDebug('send-notif-start', `Mempersiapkan kirim ke ${jids.length} jid: ${jids.join(', ')}`);
   if (!jids.length) {
     console.warn('[WA] ADMIN_WA_NOTIFY_JIDS belum dikonfigurasi — notifikasi dilewati.');
+    waDebug('send-notif-skip', 'ADMIN_WA_NOTIFY_JIDS kosong');
     return false;
   }
+
+  // Jika koneksi belum 'open', coba pastikan client aktif & tunggu sebentar
   if (rt.state !== 'open' || !rt.socket) {
-    await ensureWaClient();
-    if (rt.state !== 'open' || !rt.socket) return false;
+    waDebug('send-notif-wait', `State saat ini: ${rt.state}. Memastikan socket aktif...`);
+    ensureWaClient().catch((e) => waDebug('send-notif-ensure-err', e));
+
+    const startTime = Date.now();
+    while ((rt.state !== 'open' || !rt.socket) && Date.now() - startTime < 12000) {
+      if (rt.state === 'qr') {
+        waDebug('send-notif-stop', 'Sesi WA membutuhkan scan QR ulang');
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+
+    if (rt.state !== 'open' || !rt.socket) {
+      waDebug('send-notif-failed', `Koneksi WA belum open setelah menunggu (state=${rt.state})`);
+      return false;
+    }
   }
+
   let anySent = false;
   for (const jid of jids) {
     try {
+      waDebug('send-notif-dispatch', `Mengirim notifikasi ke ${jid}...`);
       await rt.socket.sendMessage(jid, { text });
+      waDebug('send-notif-success', `Notifikasi berhasil dikirim ke ${jid}`);
       anySent = true;
     } catch (err) {
+      waDebug('send-notif-error', `Gagal kirim ke ${jid}:`, err);
       console.error(`[WA] sendAdminNotification error ke ${jid}:`, err);
     }
   }

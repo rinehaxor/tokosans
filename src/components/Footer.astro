@@ -1,132 +1,261 @@
 ---
 ---
 <footer class="footer">
-  <div class="shell">
+  <div class="footer-shell">
     <div class="footer-grid">
-      <div>
-        <a class="logo" href="/">
-          <img src="/logo-white.png" alt="tokosans logo" class="logo-img" />
-          <span>tokosans<b>.</b></span>
+      <!-- Brand Column -->
+      <div class="footer-brand">
+        <a class="footer-logo" href="/" aria-label="tokosans. Beranda">
+          <img src="/favicon.svg" alt="tokosans logo" class="footer-logo-img" width="30" height="30" />
+          <span class="footer-logo-text">tokosans<b>.</b></span>
         </a>
-        <p class="footer-copy">Etalase layanan digital pilihan dengan pengiriman akun instan, garansi penuh, dan alur checkout yang mudah.</p>
+        <p class="footer-copy">
+          Penyedia akses akun dan aplikasi digital premium dengan alur otomatis instan, garansi penuh, dan metode pembayaran QRIS realtime.
+        </p>
+        <div class="footer-badges">
+          <span class="footer-badge">Instant 24/7</span>
+          <span class="footer-badge">Garansi Penuh</span>
+          <span class="footer-badge">QRIS Otomatis</span>
+        </div>
       </div>
-      <div>
-        <h3>Jelajahi</h3>
-        <a href="/#produk">Koleksi produk</a>
-        <a href="/#manfaat">Keunggulan</a>
-        <a href="/#cara-kerja">Cara kerja</a>
-      </div>
-      <div>
-        <h3>Bantuan</h3>
-        <a href="/#faq">Pertanyaan umum</a>
-        <a href="/blog">Blog</a>
-        <a href="mailto:hello@tokosans.id">Hubungi kami</a>
-        <a href="/#produk">Mulai berbelanja</a>
-      </div>
-      <div>
-        <h3>Legal</h3>
-        <a href="/syarat-ketentuan">Syarat &amp; Ketentuan</a>
-        <a href="/kebijakan-privasi">Kebijakan Privasi</a>
-        <a href="/kebijakan-refund">Kebijakan Refund</a>
+
+      <!-- Links Wrapper for Responsive Layout -->
+      <div class="footer-links-group">
+        <!-- Navigation Column -->
+        <div class="footer-col">
+          <h3 class="footer-title">Jelajahi</h3>
+          <ul class="footer-links">
+            <li><a href="/#produk">Koleksi Produk</a></li>
+            <li><a href="/#manfaat">Keunggulan</a></li>
+            <li><a href="/#cara-kerja">Cara Kerja</a></li>
+            <li><a href="/blog">Blog &amp; Panduan</a></li>
+          </ul>
+        </div>
+
+        <!-- Help Column -->
+        <div class="footer-col">
+          <h3 class="footer-title">Bantuan</h3>
+          <ul class="footer-links">
+            <li><a href="/#faq">Tanya Jawab (FAQ)</a></li>
+            <li><a href="mailto:hello@tokosans.id">hello@tokosans.id</a></li>
+            <li><a href="/#produk">Mulai Belanja</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal Column -->
+        <div class="footer-col">
+          <h3 class="footer-title">Legalitas</h3>
+          <ul class="footer-links">
+            <li><a href="/syarat-ketentuan">Syarat &amp; Ketentuan</a></li>
+            <li><a href="/kebijakan-privasi">Kebijakan Privasi</a></li>
+            <li><a href="/kebijakan-refund">Kebijakan Refund</a></li>
+          </ul>
+        </div>
       </div>
     </div>
+
+    <!-- Footer Bottom -->
     <div class="footer-bottom">
-      <span>© 2026 tokosans. Seluruh hak cipta dilindungi.</span>
-      <span>Layanan Digital Premium · Indonesia</span>
+      <div class="footer-copyright">
+        <span>&copy; 2026 tokosans. Seluruh hak cipta dilindungi.</span>
+      </div>
+      <div class="footer-tagline">
+        <span>Layanan Digital Premium &middot; Indonesia</span>
+      </div>
     </div>
   </div>
 </footer>
 
+
 <style>
-.footer {
-  padding: 72px 0 36px;
-  background: #180e29;
-  color: #fff;
-}
-.shell {
-  max-width: 1180px;
-  margin: auto;
-  padding: 0 28px;
-}
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font: 800 1.55rem 'Plus Jakarta Sans', sans-serif;
-  letter-spacing: -1.5px;
-  color: #fff;
-  text-decoration: none;
-}
-.logo b {
-  color: #7048e8;
-}
-.logo-img {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  object-fit: contain;
-}
-.footer-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 48px;
-}
-.footer-copy {
-  margin: 18px 0 0;
-  color: #a395bd;
-  line-height: 1.65;
-  font-size: .92rem;
-  max-width: 340px;
-}
-.footer h3 {
-  font-size: .98rem;
-  letter-spacing: 0;
-  color: #fff;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  margin: 0 0 12px;
-}
-.footer a {
-  display: block;
-  margin: 10px 0;
-  color: #b8accd;
-  text-decoration: none;
-  font-size: .88rem;
-  transition: color .18s;
-}
-.footer a:hover {
-  color: #fff;
-}
-.footer-bottom {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 48px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  color: #8d7fa6;
-  font-size: .8rem;
-}
-@media (max-width: 800px) {
-  .shell {
-    padding: 0 20px;
+  .footer {
+    background: #140d22;
+    color: #ffffff;
+    padding: 64px 0 32px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    width: 100%;
+    box-sizing: border-box;
   }
+
+  .footer-shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+    box-sizing: border-box;
+  }
+
   .footer-grid {
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    justify-content: space-between;
+    gap: 48px;
+    align-items: flex-start;
   }
-  .footer-grid > div:first-child {
-    grid-column: 1 / -1;
+
+  .footer-brand {
+    max-width: 360px;
+    flex-shrink: 0;
   }
-}
-@media (max-width: 640px) {
-  .footer-grid {
-    grid-template-columns: 1fr;
+
+  .footer-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    user-select: none;
   }
-  .footer-grid > div:first-child {
-    grid-column: auto;
+
+  .footer-logo-img {
+    width: 30px;
+    height: 30px;
+    display: block;
+    border-radius: 8px;
+    object-fit: contain;
   }
-  .footer-bottom {
-    flex-direction: column;
+
+  .footer-logo-text {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: #ffffff;
+    line-height: 1;
+  }
+
+  .footer-logo-text b {
+    color: #7048e8;
+  }
+
+  .footer-copy {
+    margin: 14px 0 18px;
+    color: #9f91ba;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .footer-badges {
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
-    text-align: center;
   }
-}
+
+  .footer-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(112, 72, 232, 0.15);
+    border: 1px solid rgba(112, 72, 232, 0.28);
+    color: #cfc2f0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .footer-links-group {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+    gap: 36px;
+    flex-grow: 1;
+    max-width: 650px;
+  }
+
+  .footer-col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .footer-title {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 14px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .footer-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .footer-links a {
+    color: #aea0c4;
+    text-decoration: none;
+    font-size: 0.86rem;
+    font-weight: 500;
+    transition: color 0.15s ease, transform 0.15s ease;
+    display: inline-block;
+    padding: 2px 0;
+  }
+
+  .footer-links a:hover {
+    color: #ffffff;
+    transform: translateX(2px);
+  }
+
+  .footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 48px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: #84759d;
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 900px) {
+    .footer {
+      padding: 52px 0 28px;
+    }
+    .footer-grid {
+      flex-direction: column;
+      gap: 36px;
+    }
+    .footer-brand {
+      max-width: 100%;
+    }
+    .footer-links-group {
+      width: 100%;
+      max-width: 100%;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .footer-shell {
+      padding: 0 18px;
+    }
+    .footer-links-group {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px 16px;
+    }
+    .footer-links-group .footer-col:last-child {
+      grid-column: 1 / -1;
+    }
+    .footer-bottom {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      margin-top: 36px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .footer-links-group {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .footer-links-group .footer-col:last-child {
+      grid-column: auto;
+    }
+  }
 </style>

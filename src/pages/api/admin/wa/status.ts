@@ -4,10 +4,11 @@ import { ensureWaClient, getWaStatus, getQrDataUrl } from '../../../../lib/wa-cl
 export const GET: APIRoute = async () => {
   await ensureWaClient();
   const status = getWaStatus();
-  const qr = status.state === 'qr' ? await getQrDataUrl() : null;
+  const qr = await getQrDataUrl();
+  const effectiveState = qr ? 'qr' : status.state;
   return new Response(
     JSON.stringify({
-      state: status.state,
+      state: effectiveState,
       qr,
       lastConnected: status.lastConnected,
       adminNumber: status.adminNumber,
