@@ -3,11 +3,13 @@ import { formatRupiah } from '../lib/catalog';
 import { getProduct } from '../lib/products';
 import { getSupabaseAdmin } from '../lib/supabase';
 import { getDefaultProductPackage, getProductPackages } from '../lib/packages';
+import { getSiteUrl } from '../lib/site';
 import CheckoutButton from '../components/CheckoutButton';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import RecentSalesToast from '../components/RecentSalesToast.astro';
 
+const siteUrl = getSiteUrl(Astro.url.origin);
 const id = Astro.url.searchParams.get('product');
 const product = id ? await getProduct(id) : undefined;
 
@@ -17,12 +19,14 @@ const defaultPackage = getDefaultProductPackage(product, packages);
 let packageAvailability: Record<string, boolean> = Object.fromEntries(packages.map((item) => [item.id, false]));
 
 let unavailable = product.active === false;
+let productImage = product.image_url || '';
 try {
   const db = getSupabaseAdmin();
   const [{ data: inventory }, { data: accounts }] = await Promise.all([
-    db.from('inventory').select('stock,active').eq('product_id', product.id).maybeSingle(),
+    db.from('inventory').select('stock,active,image_url').eq('product_id', product.id).maybeSingle(),
     db.from('account_inventory').select('package_id,status,assigned_order_id').eq('product_id', product.id),
   ]);
+  if (inventory?.image_url) productImage = inventory.image_url;
   const availableAccounts = (accounts ?? []).filter((account) => account.status === 'available' && account.assigned_order_id === null);
   packageAvailability = Object.fromEntries(packages.map((item) => [
     item.id,
@@ -39,18 +43,95 @@ const benefits = [
   ['QRIS realtime', 'Bayar melalui e-wallet atau mobile banking pilihanmu.'],
   ['Alur yang jelas', 'Detail pesanan ditampilkan sebelum pembayaran dibuat.'],
 ];
+
+const canonicalUrl = `${siteUrl}/checkout?product=${encodeURIComponent(product.id)}`;
+const metaDescription = `Beli akun premium ${product.name} ${product.duration} murah & legal di tokosans. Pengiriman instan, QRIS realtime, garansi aktif full.`;
+
+// Schema.org Product & BreadcrumbList JSON-LD
+const productSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  'name': product.name,
+  'description': product.description || metaDescription,
+  'image': productImage || `${siteUrl}/favicon.svg`,
+  'sku': product.sku || `TS-${product.id.toUpperCase()}`,
+  'brand': {
+    '@type': 'Brand',
+    'name': product.brand || product.name
+  },
+  'offers': {
+    '@type': 'Offer',
+    'url': canonicalUrl,
+    'priceCurrency': 'IDR',
+    'price': product.price,
+    'priceValidUntil': '2026-12-31',
+    'itemCondition': 'https://schema.org/NewCondition',
+    'availability': !unavailable ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    'seller': {
+      '@type': 'Organization',
+      'name': 'tokosans.',
+      'url': siteUrl
+    }
+  }
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    {
+      '@type': 'ListItem',
+      'position': 1,
+      'name': 'Home',
+      'item': siteUrl
+    },
+    {
+      '@type': 'ListItem',
+      'position': 2,
+      'name': product.category || 'Katalog',
+      'item': `${siteUrl}/#produk`
+    },
+    {
+      '@type': 'ListItem',
+      'position': 3,
+      'name': product.name,
+      'item': canonicalUrl
+    }
+  ]
+};
 ---
 
 <html lang="id">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="description" content={`Checkout ${product.name} di tokosans.`} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beli {product.name} {product.duration} — Legal & Murah | tokosans.</title>
+    <meta name="description" content={metaDescription} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="product" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={`Beli ${product.name} ${product.duration} Murah & Legal — tokosans.`} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:image" content={productImage || `${siteUrl}/og-image.png`} />
+    <meta property="og:site_name" content="tokosans." />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={`Beli ${product.name} ${product.duration} — tokosans.`} />
+    <meta name="twitter:description" content={metaDescription} />
+    <meta name="twitter:image" content={productImage || `${siteUrl}/og-image.png`} />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png" />
-    <title>{product.name} — Checkout | tokosans.</title>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json" set:html={JSON.stringify(productSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+
     <style is:global>
       @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
       :root { --ink:#201630; --muted:#746b80; --violet:#7048e8; --line:#e8e2f0; }

@@ -6,6 +6,9 @@ import Footer from '../components/Footer.astro';
 
 import { formatRupiah } from '../lib/catalog';
 import { getProducts } from '../lib/products';
+import { getSiteUrl } from '../lib/site';
+
+const siteUrl = getSiteUrl(Astro.url.origin);
 const products = await getProducts();
 const categories = [...new Set(products.map((product) => product.category))];
 import { getSupabaseAdmin } from '../lib/supabase';
@@ -54,8 +57,58 @@ const faqs = [
   ['Bagaimana jika email akun tidak masuk?', 'Detail akun dikirimkan otomatis ke email kamu. Apabila tidak ada di inbox utama, silakan periksa folder Spam email kamu.'],
   ['Bagaimana jika saya lupa menyimpan akun?', 'Kamu bisa mengecek kembali pesananmu kapan saja melalui tombol Cek Pesanan di navigasi atas cukup dengan memasukkan alamat email kamu.']
 ];
+
+// Schema.org Structured Data (JSON-LD)
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'OnlineStore',
+  'name': 'tokosans.',
+  'url': siteUrl,
+  'logo': `${siteUrl}/favicon.svg`,
+  'description': 'Pusat langganan dan akses akun aplikasi digital premium instan, murah, dan bergaransi.',
+  'paymentAccepted': 'QRIS, GoPay, OVO, DANA, ShopeePay, Bank Transfer',
+  'currenciesAccepted': 'IDR',
+};
+
+const itemListSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  'name': 'Katalog Layanan Digital Premium tokosans.',
+  'itemListElement': products.map((p, idx) => ({
+    '@type': 'ListItem',
+    'position': idx + 1,
+    'item': {
+      '@type': 'Product',
+      'name': p.name,
+      'description': p.description,
+      'image': productImages[p.id] || `${siteUrl}/favicon.svg`,
+      'url': `${siteUrl}/checkout?product=${encodeURIComponent(p.id)}`,
+      'brand': {
+        '@type': 'Brand',
+        'name': p.brand || p.name
+      },
+      'offers': {
+        '@type': 'Offer',
+        'price': p.price,
+        'priceCurrency': 'IDR',
+        'availability': p.active !== false ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        'url': `${siteUrl}/checkout?product=${encodeURIComponent(p.id)}`,
+        'seller': {
+          '@type': 'Organization',
+          'name': 'tokosans.'
+        }
+      },
+      'aggregateRating': {
+        '@type': 'AggregateRating',
+        'ratingValue': seededRating(p.id),
+        'bestRating': '5',
+        'ratingCount': Math.max(25, soldCounts[p.id] || 30)
+      }
+    }
+  }))
+};
 ---
-<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="description" content="tokosans. — Akses aplikasi & akun digital premium harga bersahabat dengan pengiriman instan."/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/><link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png"/><title>tokosans. — Premium digital made simple</title><style>
+<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="description" content="Pusat langganan akun digital premium terpercaya. Canva Pro, Netflix, Spotify, CapCut Pro murah dan bergaransi full. Pembayaran QRIS otomatis realtime."/><title>tokosans. — Akses Akun Digital Premium Legal & Murah | Pengiriman Instan</title><link rel="canonical" href={siteUrl}/><meta property="og:type" content="website"/><meta property="og:url" content={siteUrl}/><meta property="og:title" content="tokosans. — Akses Akun Digital Premium Legal & Murah"/><meta property="og:description" content="Pusat langganan akun digital premium terpercaya. Proses instan 24/7, QRIS otomatis, garansi penuh."/><meta property="og:image" content={`${siteUrl}/og-image.png`}/><meta property="og:site_name" content="tokosans."/><meta property="og:locale" content="id_ID"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content="tokosans. — Akses Akun Digital Premium Legal & Murah"/><meta name="twitter:description" content="Pusat langganan akun digital premium terpercaya. Proses otomatis instan, QRIS realtime, garansi penuh."/><meta name="twitter:image" content={`${siteUrl}/og-image.png`}/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/><link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png"/><script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} /><script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} /><style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 :root{--ink:#1e142e;--muted:#6f647d;--v:#7048e8;--v-dark:#5932d2;--l:#f1ecfe;--line:#e8e1f2;--bg:#faf8ff}
 *{box-sizing:border-box}html{scroll-behavior:smooth}

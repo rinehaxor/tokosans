@@ -1,4 +1,5 @@
 ---
+import { getSiteUrl } from '../lib/site';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 
@@ -11,17 +12,61 @@ interface Props {
 }
 
 const { title, metaTitle, description, updated, sections } = Astro.props;
+const siteUrl = getSiteUrl(Astro.url.origin);
+const canonicalUrl = `${siteUrl}${Astro.url.pathname}`;
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': siteUrl },
+    { '@type': 'ListItem', 'position': 2, 'name': title, 'item': canonicalUrl }
+  ]
+};
+
+const webPageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  'name': metaTitle,
+  'description': description,
+  'url': canonicalUrl,
+  'publisher': {
+    '@type': 'Organization',
+    'name': 'tokosans.',
+    'url': siteUrl
+  }
+};
 ---
 <html lang="id">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{metaTitle}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={metaTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={`${siteUrl}/og-image.png`} />
+    <meta property="og:site_name" content="tokosans." />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={metaTitle} />
+    <meta name="twitter:description" content={description} />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png" />
-    <title>{metaTitle}</title>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(webPageSchema)} />
+
     <style>
       @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
       :root{--ink:#201630;--muted:#746a80;--v:#7048e8;--l:#f0ecff;--line:#e8e2f2;--bg:#fdfcff}

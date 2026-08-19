@@ -65,10 +65,52 @@ if (relatedProducts.length > 0) {
   } catch { /* fallback ke ikon bawaan */ }
 }
 
+import { getSiteUrl } from '../../lib/site';
+const siteUrl = getSiteUrl(Astro.url.origin);
+const postUrl = `${siteUrl}/blog/${post.slug}`;
+const coverImgUrl = post.cover_url || `${siteUrl}/og-image.png`;
+
+// Schema.org Article & BreadcrumbList JSON-LD
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  'headline': post.title,
+  'description': post.excerpt || post.title,
+  'image': coverImgUrl,
+  'datePublished': post.published_at ? new Date(post.published_at).toISOString() : new Date().toISOString(),
+  'dateModified': post.updated_at ? new Date(post.updated_at).toISOString() : (post.published_at ? new Date(post.published_at).toISOString() : new Date().toISOString()),
+  'mainEntityOfPage': {
+    '@type': 'WebPage',
+    '@id': postUrl
+  },
+  'author': {
+    '@type': 'Organization',
+    'name': 'tokosans. Editorial Team',
+    'url': siteUrl
+  },
+  'publisher': {
+    '@type': 'Organization',
+    'name': 'tokosans.',
+    'url': siteUrl,
+    'logo': {
+      '@type': 'ImageObject',
+      'url': `${siteUrl}/favicon.svg`
+    }
+  }
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': siteUrl },
+    { '@type': 'ListItem', 'position': 2, 'name': 'Blog', 'item': `${siteUrl}/blog` },
+    { '@type': 'ListItem', 'position': 3, 'name': post.title, 'item': postUrl }
+  ]
+};
 ---
 
-<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content={post.excerpt || post.title}/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/><link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png"/><title>{post.title} — tokosans.</title>
-<style>
+<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="description" content={post.excerpt || post.title}/><title>{post.title} — tokosans.</title><link rel="canonical" href={postUrl}/><meta property="og:type" content="article"/><meta property="og:url" content={postUrl}/><meta property="og:title" content={`${post.title} — tokosans.`}/><meta property="og:description" content={post.excerpt || post.title}/><meta property="og:image" content={coverImgUrl}/><meta property="og:site_name" content="tokosans."/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content={`${post.title} — tokosans.`}/><meta name="twitter:description" content={post.excerpt || post.title}/><meta name="twitter:image" content={coverImgUrl}/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/><link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png"/><script type="application/ld+json" set:html={JSON.stringify(articleSchema)} /><script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} /><style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 :root{--ink:#201630;--muted:#746a80;--v:#7048e8;--l:#f0ecff;--line:#e8e2f2;--bg:#fdfcff}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif}

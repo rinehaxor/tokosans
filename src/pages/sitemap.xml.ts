@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getSiteUrl } from '../lib/site';
 import { getPublishedPosts } from '../lib/blog';
+import { getProducts } from '../lib/products';
 
 function escapeXml(value: string): string {
   return value
@@ -19,12 +20,12 @@ function toLastmod(date: string): string {
 export const GET: APIRoute = async ({ request }) => {
   const site = getSiteUrl(new URL(request.url).origin);
 
-  const staticPages: { path: string; lastmod?: string }[] = [
-    { path: '/' },
-    { path: '/blog' },
-    { path: '/syarat-ketentuan' },
-    { path: '/kebijakan-privasi' },
-    { path: '/kebijakan-refund' },
+  const staticPages: { path: string; changefreq?: string; priority?: string; lastmod?: string }[] = [
+    { path: '/', changefreq: 'daily', priority: '1.0' },
+    { path: '/blog', changefreq: 'daily', priority: '0.8' },
+    { path: '/syarat-ketentuan', changefreq: 'monthly', priority: '0.4' },
+    { path: '/kebijakan-privasi', changefreq: 'monthly', priority: '0.4' },
+    { path: '/kebijakan-refund', changefreq: 'monthly', priority: '0.4' },
   ];
 
   let posts: Awaited<ReturnType<typeof getPublishedPosts>> = [];
@@ -34,11 +35,33 @@ export const GET: APIRoute = async ({ request }) => {
     /* Supabase tidak tersedia — sitemap tetap berisi halaman statis */
   }
 
-  const urls = [
-    ...staticPages.map((page) => ({ loc: `${site}${page.path}`, lastmod: '' })),
+  let products: Awaited<ReturnType<typeof getProducts>> = [];
+  try {
+    products = await getProducts();
+  } catch {
+    /* fallback ke katalog default bila gagal */
+  }
+
+  const urls: { loc: string; lastmod?: string; changefreq?: string; priority?: string }[] = [
+    ...staticPages.map((page) => ({
+      loc: `${site}${page.path}`,
+      lastmod: '',
+      changefreq: page.changefreq,
+      priority: page.priority,
+    })),
+    ...products
+      .filter((p) => p.active !== false)
+      .map((p) => ({
+        loc: `${site}/checkout?product=${encodeURIComponent(p.id)}`,
+        lastmod: '',
+        changefreq: 'weekly',
+        priority: '0.9',
+      })),
     ...posts.map((post) => ({
       loc: `${site}/blog/${post.slug}`,
       lastmod: toLastmod(post.updated_at || post.published_at || ''),
+      changefreq: 'weekly',
+      priority: '0.7',
     })),
   ];
 
@@ -48,12 +71,17 @@ export const GET: APIRoute = async ({ request }) => {
     urls
       .map((entry) => {
         const lastmod = entry.lastmod ? `\n    <lastmod>${entry.lastmod}</lastmod>` : '';
-        return `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>${lastmod}\n  </url>`;
+        const changefreq = entry.changefreq ? `\n    <changefreq>${entry.changefreq}</changefreq>` : '';
+        const priority = entry.priority ? `\n    <priority>${entry.priority}</priority>` : '';
+        return `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>${lastmod}${changefreq}${priority}\n  </url>`;
       })
       .join('\n') +
     '\n</urlset>\n';
 
   return new Response(xml, {
-    headers: { 'Content-Type': 'application/xml; charset=utf-8' },
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600',
+    },
   });
 };
