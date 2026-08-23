@@ -1,0 +1,50 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { getSiteUrl } from '../lib/site';
+
+const siteUrl = getSiteUrl(Astro.url.origin);
+Astro.response.status = 404;
+---
+
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#7048e8" />
+    <meta name="robots" content="noindex, follow" />
+    <title>Halaman Tidak Ditemukan — tokosans.</title>
+    <meta name="description" content="Halaman yang kamu cari tidak ditemukan. Kembali ke beranda tokosans. untuk lihat katalog akun digital premium." />
+    <link rel="canonical" href={`${siteUrl}/404`} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style is:global>
+      @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+      :root{--ink:#1e142e;--muted:#6f647d;--v:#7048e8;--v-dark:#5932d2;--l:#f1ecfe;--line:#e8e1f2;--bg:#faf8ff}
+      *{box-sizing:border-box}
+      body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+      .notfound{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px;background:radial-gradient(ellipse at 50% -20%,rgba(112,72,232,0.12) 0%,rgba(250,248,255,0) 70%)}
+      .notfound-code{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(4rem,12vw,7rem);line-height:1;color:var(--v);letter-spacing:-.03em}
+      .notfound h1{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:clamp(1.5rem,3vw,2.1rem);margin:12px 0 8px;color:#180e29}
+      .notfound p{max-width:440px;color:var(--muted);line-height:1.6;margin:0 0 28px}
+      .notfound-actions{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+      .button{display:inline-flex;align-items:center;justify-content:center;border-radius:12px;text-decoration:none;font-weight:700;padding:13px 24px;font-size:.95rem;transition:all .2s cubic-bezier(.34,1.56,.64,1)}
+      .primary{color:#fff;background:var(--v);box-shadow:0 10px 24px rgba(112,72,232,0.3)}
+      .primary:hover{background:var(--v-dark);transform:translateY(-2px)}
+      .secondary{border:1px solid #dcd3f0;color:var(--ink);background:#fff}
+      .secondary:hover{border-color:var(--v);color:var(--v);transform:translateY(-2px)}
+    </style>
+  </head>
+  <body>
+    <Header />
+    <main class="notfound">
+      <span class="notfound-code">404</span>
+      <h1>Halaman tidak ditemukan</h1>
+      <p>Link yang kamu buka mungkin sudah tidak berlaku atau salah ketik. Yuk cek katalog akun digital premium kami.</p>
+      <div class="notfound-actions">
+        <a class="button primary" href="/">Kembali ke Beranda</a>
+        <a class="button secondary" href="/#produk">Lihat Produk</a>
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

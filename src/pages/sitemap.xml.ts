@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ request }) => {
     ...products
       .filter((p) => p.active !== false)
       .map((p) => ({
-        loc: `${site}/checkout?product=${encodeURIComponent(p.id)}`,
+        loc: `${site}/checkout/${encodeURIComponent(p.id)}`,
         lastmod: '',
         changefreq: 'weekly',
         priority: '0.9',

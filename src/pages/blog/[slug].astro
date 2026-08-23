@@ -215,7 +215,7 @@ h1,h2,h3{font-family:'Plus Jakarta Sans';letter-spacing:-.05em}
         const orig = product.original_price && product.original_price > product.price ? product.original_price : null;
         const pct = orig ? Math.round(((orig - product.price) / orig) * 100) : null;
         return (
-          <a class="related-card" href={`/checkout?product=${product.id}`}>
+          <a class="related-card" href={`/checkout/${product.id}`}>
             <div class="related-icon">
               {relatedImages[product.id] ? <img src={relatedImages[product.id]} alt={product.name} loading="lazy"/> : <span>{product.icon || '⚡'}</span>}
             </div>

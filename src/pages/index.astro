@@ -99,7 +99,7 @@ const itemListSchema = {
       'name': p.name,
       'description': p.description,
       'image': productImages[p.id] || `${siteUrl}/favicon.svg`,
-      'url': `${siteUrl}/checkout?product=${encodeURIComponent(p.id)}`,
+      'url': `${siteUrl}/checkout/${encodeURIComponent(p.id)}`,
       'brand': {
         '@type': 'Brand',
         'name': p.brand || p.name
@@ -109,7 +109,7 @@ const itemListSchema = {
         'price': p.price,
         'priceCurrency': 'IDR',
         'availability': p.active !== false ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-        'url': `${siteUrl}/checkout?product=${encodeURIComponent(p.id)}`,
+        'url': `${siteUrl}/checkout/${encodeURIComponent(p.id)}`,
         'seller': {
           '@type': 'Organization',
           'name': 'tokosans.'
@@ -396,7 +396,7 @@ h1 em{color:var(--v);font-style:normal;background:linear-gradient(135deg,#7048e8
         const discountPct = origPrice ? Math.round(((origPrice - product.price) / origPrice) * 100) : null;
         return (
           <article class="card" data-category={product.category}>
-            <a href={`/checkout?product=${product.id}`} class="card-link" aria-label={product.name}>
+            <a href={`/checkout/${product.id}`} class="card-link" aria-label={product.name}>
               <div class="card-header">
                 <div class="app-icon">
                   {productImages[product.id] ? (
