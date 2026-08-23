@@ -1,0 +1,21 @@
+{
+  "name": "tokosans. — Akses Akun Digital Premium Legal & Murah",
+  "short_name": "tokosans.",
+  "description": "Pusat langganan dan akses akun aplikasi digital premium instan, murah, dan bergaransi.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf8ff",
+  "theme_color": "#7048e8",
+  "icons": [
+    {
+      "src": "/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
