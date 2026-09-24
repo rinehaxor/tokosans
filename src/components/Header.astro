@@ -2,7 +2,7 @@
 import OrderLookupModal from './OrderLookupModal';
 
 interface Props {
-  activeNav?: 'home' | 'produk' | 'manfaat' | 'cara-kerja' | 'faq' | 'blog';
+  activeNav?: 'home' | 'topup' | 'produk' | 'manfaat' | 'cara-kerja' | 'faq' | 'blog';
 }
 
 const { activeNav } = Astro.props;
@@ -17,8 +17,7 @@ const { activeNav } = Astro.props;
       </a>
 
       <div class="header-links desktop-only">
-        <a href="/#produk" class:list={{ active: activeNav === 'produk' }}>Produk</a>
-        <a href="/#manfaat" class:list={{ active: activeNav === 'manfaat' }}>Keunggulan</a>
+        <a href="/#produk" class:list={{ active: activeNav === 'manfaat' }}>Keunggulan</a>
         <a href="/#cara-kerja" class:list={{ active: activeNav === 'cara-kerja' }}>Cara Kerja</a>
         <a href="/#faq" class:list={{ active: activeNav === 'faq' }}>Bantuan</a>
         <a href="/blog" class:list={{ active: activeNav === 'blog' }}>Blog</a>
@@ -26,7 +25,7 @@ const { activeNav } = Astro.props;
 
       <div class="header-actions desktop-only">
         <OrderLookupModal client:load />
-        <a class="header-cta" href="/#produk">
+        <a class="header-cta" href="/#produk-premium">
           <span>Belanja sekarang</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
@@ -46,14 +45,13 @@ const { activeNav } = Astro.props;
   <div class="mobile-drawer" id="mobile-nav-drawer" aria-hidden="true">
     <div class="mobile-drawer-inner">
       <div class="mobile-links">
-        <a href="/#produk" class="mobile-link"><span>Koleksi Produk</span></a>
         <a href="/#manfaat" class="mobile-link"><span>Keunggulan</span></a>
         <a href="/#cara-kerja" class="mobile-link"><span>Cara Kerja</span></a>
         <a href="/#faq" class="mobile-link"><span>Pusat Bantuan</span></a>
         <a href="/blog" class="mobile-link"><span>Blog &amp; Panduan</span></a>
       </div>
       <div class="mobile-drawer-cta">
-        <a class="mobile-cta-btn" href="/#produk"><span>Mulai Belanja Sekarang</span></a>
+        <a class="mobile-cta-btn" href="/#produk-premium"><span>Mulai Belanja Sekarang</span></a>
       </div>
     </div>
   </div>

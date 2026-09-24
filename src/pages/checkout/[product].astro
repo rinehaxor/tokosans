@@ -16,6 +16,9 @@ const product = id ? await getProduct(id) : undefined;
 if (!product) return Astro.redirect('/');
 const packages = (await getProductPackages(product)).filter((item) => item.active);
 const defaultPackage = getDefaultProductPackage(product, packages);
+// Produk top up game (Digiflazz): alur terpisah di halaman /topup/[product]
+const isTopupProduct = packages.some((item) => item.requires_customer_no === true);
+if (isTopupProduct) return Astro.redirect(`/topup/${encodeURIComponent(product.id)}`, 301);
 let packageAvailability: Record<string, boolean> = Object.fromEntries(packages.map((item) => [item.id, false]));
 
 let unavailable = product.active === false;
@@ -35,11 +38,14 @@ try {
   unavailable = unavailable || Boolean(inventory && inventory.active === false) || !packages.some((item) => packageAvailability[item.id]);
 } catch { /* validasi final tetap dilakukan oleh API checkout */ }
 
+const waCheckoutLink = `https://wa.me/tokosans?text=${encodeURIComponent(`Halo, saya ingin membeli ${product.name} tapi stoknya habis di website. Apakah masih tersedia via WhatsApp?`)}`;
+
 const firstAvailablePackageIndex = packages.findIndex((item) => packageAvailability[item.id]);
 
 const benefits = [
   ['Harga transparan', 'Total pembayaran sesuai paket yang kamu pilih.'],
   ['Pesanan tercatat', 'Simpan referensi untuk memantau status pembayaran.'],
+  ['Garansi penuh', 'Akun dilindungi garansi selama masa aktif langganan berlangsung.'],
   ['QRIS realtime', 'Bayar melalui e-wallet atau mobile banking pilihanmu.'],
   ['Alur yang jelas', 'Detail pesanan ditampilkan sebelum pembayaran dibuat.'],
 ];
@@ -113,6 +119,8 @@ const breadcrumbSchema = {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
+    <meta name="robots" content="noindex, follow" />
+
     <!-- Open Graph -->
     <meta property="og:type" content="product" />
     <meta property="og:url" content={canonicalUrl} />
@@ -120,6 +128,7 @@ const breadcrumbSchema = {
     <meta property="og:description" content={metaDescription} />
     <meta property="og:image" content={productImage || `${siteUrl}/og-image.png`} />
     <meta property="og:site_name" content="tokosans." />
+    <meta property="og:locale" content="id_ID" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -206,7 +215,7 @@ const breadcrumbSchema = {
       .summary-row { display:flex; justify-content:space-between; gap:18px; margin:11px 0; color:#73697e; font-size:.87rem; }
       .summary-row b { color:var(--ink); }
       .divider { height:1px; margin:18px 0; background:#ece8f1; }
-      .total { display:flex; justify-content:space-between; align-items:end; }
+      .total { display:flex; justify-content:space-between; align-items:end; margin-bottom:30px; }
       .total span { font-size:.88rem; font-weight:700; }
       .total strong { color:var(--violet); font:800 1.45rem 'Plus Jakarta Sans'; letter-spacing:-.06em; }
       .pay { width:100%; margin-top:21px; padding:18px 16px 15px; border:0; border-radius:16px; background:linear-gradient(135deg,#7048e8 0%,#9861ff 100%); color:#fff; font:800 1rem 'Plus Jakarta Sans'; letter-spacing:.2px; cursor:pointer; box-shadow:0 8px 28px #7048e840, 0 2px 8px #7048e820; transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease; position:relative; overflow:hidden; animation:pay-breathe 3s ease-in-out infinite; }
@@ -220,6 +229,16 @@ const breadcrumbSchema = {
       @keyframes pay-breathe { 0%,100% { box-shadow:0 8px 28px #7048e840,0 2px 8px #7048e820; } 50% { box-shadow:0 10px 36px #7048e860,0 0 0 7px #7048e814; } }
       .pay small { display:block; margin-top:3px; color:#e3d8ff; font-size:.7rem; font-weight:600; letter-spacing:.1px; }
       .secure-note { margin:12px 0 0; text-align:center; color:#80768a; font-size:.73rem; }
+      .wa-checkout-btn { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:21px; padding:18px 16px; border:0; border-radius:16px; background:linear-gradient(135deg,#25d366 0%,#128c7e 100%); color:#fff; font:800 1rem 'Plus Jakarta Sans'; letter-spacing:.2px; cursor:pointer; text-decoration:none; box-shadow:0 8px 28px #25d36640, 0 2px 8px #25d36620; transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease; }
+      .wa-checkout-btn:hover { filter:brightness(1.08); transform:translateY(-2px) scale(1.012); box-shadow:0 14px 38px #25d36650, 0 4px 12px #25d36630; }
+      .wa-checkout-btn:active { transform:scale(.97); box-shadow:0 4px 12px #25d36628; }
+      .checkout-btns { display:flex; flex-direction:column; gap:12px; align-items:stretch; }
+      .checkout-btns .pay { margin-top:0; }
+      .checkout-btns .wa-checkout-btn { margin-top:0; }
+      .wa-hint { margin:14px 0 0; text-align:center; color:#6c757d; font-size:.78rem; line-height:1.5; cursor:pointer; }
+      .wa-hint a { color:#25d366; font-weight:600; text-decoration:none; }
+      .wa-hint a:hover { text-decoration:underline; }
+      .pay:disabled { opacity:.55; cursor:not-allowed; transform:none; filter:saturate(.3); box-shadow:none; }
       .footer { padding:23px 0; border-top:1px solid #e6e1ed; background:#ffffffa6; color:#766c81; font-size:.77rem; }
       .footer .shell { display:flex; justify-content:space-between; gap:15px; }
       .footer strong { color:#51445f; }
@@ -242,6 +261,26 @@ const breadcrumbSchema = {
 .badge-red{background:#fef2f2;color:#dc2626}
 .info-icon{opacity:.7}
 
+      /* ── Out-of-stock WhatsApp banner (top of checkout) ── */
+      .oos-banner{display:none;align-items:center;gap:12px;margin-bottom:18px;padding:16px 20px;border-radius:14px;background:linear-gradient(135deg,#25d366 0%,#128c7e 100%);color:#fff;font-weight:700;font-size:.9rem;box-shadow:0 6px 24px #25d36640;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s ease;text-decoration:none;cursor:pointer;}
+      .oos-banner.visible{display:flex;}
+      .oos-banner:hover{filter:brightness(1.08);transform:translateY(-2px) scale(1.01);box-shadow:0 10px 32px #25d36650;}
+      .oos-banner:active{transform:scale(.97);}
+      .oos-banner svg{flex-shrink:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.15));}
+      .oos-banner-content{display:flex;flex-direction:column;gap:2px;min-width:0;}
+      .oos-banner-title{font:800 .92rem 'Plus Jakarta Sans';}
+      .oos-banner-sub{font-weight:500;font-size:.78rem;opacity:.9;}
+      @media(max-width:540px){.oos-banner{padding:14px 16px;font-size:.84rem;gap:10px;}.oos-banner-title{font-size:.86rem;}.oos-banner-sub{font-size:.74rem;}}
+
+      /* ── Floating WhatsApp FAB (bottom-right) ── */
+      .wa-fab{position:fixed;bottom:24px;right:24px;z-index:9999;display:none;align-items:center;justify-content:center;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#25d366 0%,#128c7e 100%);color:#fff;text-decoration:none;box-shadow:0 6px 20px #25d36650,0 2px 6px rgba(0,0,0,.15);transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s ease;}
+      .wa-fab.visible{display:flex;}
+      .wa-fab:hover{transform:scale(1.1);box-shadow:0 8px 28px #25d36670,0 3px 10px rgba(0,0,0,.2);}
+      .wa-fab:active{transform:scale(.95);}
+      .wa-fab::before{content:'';position:absolute;inset:-4px;border-radius:50%;background:rgba(37,211,102,.25);animation:wa-ping 1.5s ease-out infinite;pointer-events:none;}
+      @keyframes wa-ping{0%{transform:scale(1);opacity:.6;}100%{transform:scale(1.45);opacity:0;}}
+      @media(max-width:540px){.wa-fab{bottom:20px;right:20px;width:54px;height:54px;}.wa-fab svg{width:26px;height:26px;}}
+
 </style>
   </head>
   <body>
@@ -249,6 +288,7 @@ const breadcrumbSchema = {
       <Header />
       <main class="shell">
         <nav class="crumb" aria-label="Breadcrumb"><a href="/">Beranda</a><span>/</span><a href="/#produk">Semua produk</a><span>/</span><strong>{product.name}</strong></nav>
+        {(unavailable || !packages.length) && <a class="oos-banner visible" href={waCheckoutLink} target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="28" height="28" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.888 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg><div class="oos-banner-content"><span class="oos-banner-title">Stok di Website habis — Pesan Produk via WhatsApp</span><span class="oos-banner-sub">Klik di sini untuk pesan melalui WhatsApp</span></div></a>}
         <div class="layout">
           <aside class="side">
             <section class="card product-card">
@@ -287,10 +327,11 @@ const breadcrumbSchema = {
           </aside>
           <form class="flow" action="/api/checkout" method="post">
             <input type="hidden" name="productId" value={product.id} />
+            <input type="hidden" name="paymentMethod" value="tokopay" />
             <section class="card step"><div class="step-head"><span class="number">1</span>Pilih paket</div><div class="step-body"><span class="choice-label">Paket tersedia</span><div class="package-list">{packages.map((item, index) => { const available = packageAvailability[item.id]; return <label class:list-unavailable={!available} class="choice"><input type="radio" checked={index === firstAvailablePackageIndex} disabled={!available} required name="packageId" value={item.id} /><span><span>{item.name}{item.name.trim().toLowerCase() !== item.duration.trim().toLowerCase() && <small>{item.duration}</small>}{!available && <small class="sold-out">Stok habis</small>}</span><b>{formatRupiah(item.price)}</b></span></label>; })}</div></div></section>
             <section class="card step"><div class="step-head"><span class="number">2</span>Masukkan data pembeli</div><div class="step-body"><div class="form-grid"><label class="field"><span class="field-label">Nama lengkap</span><input required name="name" autocomplete="name" placeholder="Masukkan nama lengkap" /><p class="field-help">Untuk mengenali pesananmu.</p></label><label class="field"><span class="field-label">Alamat email</span><input required type="email" name="email" autocomplete="email" placeholder="pembeli@email.com" /><p class="field-help">Info pesanan dikirim ke email ini.</p></label></div></div></section>
-            <section class="card step"><div class="step-head"><span class="number">3</span>Pilih metode pembayaran</div><div class="step-body"><span class="choice-label">Pembayaran tersedia</span><div class="payment-option"><div class="qris">QRIS</div><div>QRIS otomatis<small>Scan dari e-wallet atau mobile banking setelah pesanan dibuat.</small></div></div></div></section>
-            <section class="card step"><div class="step-head"><span class="number">4</span>Ringkasan pembayaran</div><div class="summary-body"><div class="summary-row"><span id="summary-name">{product.name} · {packages[firstAvailablePackageIndex >= 0 ? firstAvailablePackageIndex : 0]?.duration}</span><b id="summary-price">{formatRupiah(packages[firstAvailablePackageIndex >= 0 ? firstAvailablePackageIndex : 0]?.price ?? product.price)}</b></div><div class="summary-row"><span>Biaya admin</span><b>Rp0</b></div><div class="divider"></div><div class="total"><span>Total pembayaran</span><strong id="summary-total">{formatRupiah(packages[firstAvailablePackageIndex >= 0 ? firstAvailablePackageIndex : 0]?.price ?? product.price)}</strong></div>{unavailable || !packages.length ? <p class="secure-note">Produk ini sedang habis stok dan tidak dapat di-checkout.</p> : <CheckoutButton client:load />}<p class="secure-note">Dengan melanjutkan, kamu menyetujui detail pesanan yang dipilih.</p></div></section>
+            <div class="payment-option"><div class="qris">QRIS</div><div>Pembayaran otomatis<small>Scan dari e-wallet (Dana, GoPay, OVO, ShopeePay) atau mobile banking setelah pesanan dibuat.</small></div></div>
+            <section class="card step"><div class="step-head"><span class="number">4</span>Ringkasan pembayaran</div><div class="summary-body"><div class="summary-row"><span id="summary-name">{product.name} · {packages[firstAvailablePackageIndex >= 0 ? firstAvailablePackageIndex : 0]?.duration}</span><b id="summary-price">{formatRupiah(packages[firstAvailablePackageIndex >= 0 ? firstAvailablePackageIndex : 0]?.price ?? product.price)}</b></div><div class="summary-row"><span>Biaya admin</span><b>Rp0</b></div><div class="divider"></div><div class="total"><span>Total pembayaran</span><strong id="summary-total">{formatRupiah(packages[firstAvailablePackageIndex >= 0 ? firstAvailablePackageIndex : 0]?.price ?? product.price)}</strong></div>{(unavailable || !packages.length) && <p class="wa-hint">Stok di website habis? Silakan hubungi kami via <a href="#wa-btn">WhatsApp</a> untuk ketersediaan.</p>}<div class="checkout-btns"><CheckoutButton client:load disabled={unavailable || !packages.length} />{(unavailable || !packages.length) && <a id="wa-btn" class="wa-checkout-btn" href={waCheckoutLink} target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Hubungi WA</a>}</div><p class="secure-note">Dengan melanjutkan, kamu menyetujui detail pesanan yang dipilih.</p></div></section>
           </form>
         </div>
       </main><script define:vars={{ productName: product.name, packageData: packages.map((item) => ({ id: item.id, duration: item.duration, price: item.price })) }}>document.querySelectorAll('input[name="packageId"]').forEach((input) => input.addEventListener('change', () => { const item = packageData.find((entry) => entry.id === input.value); if (!item) return; const format = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }); document.querySelector('#summary-name').textContent = `${productName} · ${item.duration}`; document.querySelector('#summary-price').textContent = format.format(item.price); document.querySelector('#summary-total').textContent = format.format(item.price); }));</script>

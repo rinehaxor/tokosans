@@ -1,0 +1,163 @@
+---
+import { cekSaldoDigiflazz } from '../../lib/digiflazz';
+import AdminSidebar from '../../components/AdminSidebar.astro';
+
+const username = import.meta.env.DIGIFLAZZ_USERNAME;
+const apiKey = import.meta.env.DIGIFLAZZ_API_KEY;
+const hasConfig = !!(username && apiKey);
+
+let saldo: number | null = null;
+let error: string | null = null;
+
+if (hasConfig) {
+  try {
+    saldo = await cekSaldoDigiflazz(username, apiKey);
+  } catch (e: any) {
+    error = e.message ?? 'Gagal cek saldo';
+  }
+}
+---
+
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Saldo Digiflazz – Admin</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+    :root{--ink:#191026;--muted:#6b6178;--v:#7048e8;--v2:#5c35d4;--l:#f3edff;--line:#eae3f5;--bg:#faf8fe;--surface:#fff;--green:#059669;--green-bg:#ecfdf5;--red:#ef4444;--red-bg:#fef2f2}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+    h1,h2,h3{font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:-.03em}
+    .layout{display:flex;min-height:100vh}
+    .content{flex:1;margin-left:250px;padding:40px 48px 80px;max-width:860px}
+    .page-head{margin-bottom:32px}.page-head h1{margin:0 0 6px;font-size:2rem;font-weight:800}.page-head p{margin:0;color:var(--muted);font-size:.95rem}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 4px 24px rgba(112,72,232,.04);padding:28px;margin-bottom:24px}
+    .card-title{display:flex;align-items:center;gap:10px;margin:0 0 16px;font-size:1.1rem;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif}
+    .saldo-amount{font-size:2.4rem;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;color:var(--ink);margin:4px 0 2px;letter-spacing:-.04em}
+    .saldo-sub{color:var(--muted);font-size:.88rem;margin:0 0 18px}
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;font-size:.78rem;font-weight:700;margin-bottom:14px}
+    .badge-ok{background:var(--green-bg);color:var(--green)}
+    .badge-err{background:var(--red-bg);color:var(--red)}
+    .badge-warn{background:#fef3c7;color:#d97706}
+    .btn-cek{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;background:var(--v);color:#fff;border:0;border-radius:12px;font:700 .9rem 'DM Sans',sans-serif;cursor:pointer;transition:all .15s;margin-top:4px}
+    .btn-cek:hover{background:var(--v2);transform:translateY(-1px)}.btn-cek:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .btn-cek.spinning svg{animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .last-check{font-size:.82rem;color:var(--muted);margin-top:10px}
+    .err-msg{color:var(--red);font-size:.9rem;font-weight:600;margin:10px 0 0}
+    .divider{border:none;border-top:1px solid var(--line);margin:8px 0 18px}
+    code{background:var(--l);padding:2px 7px;border-radius:6px;font-size:.82rem;font-weight:600;color:var(--v)}
+    a{color:var(--v)}
+    @media(max-width:900px){.content{margin-left:0;padding:24px 20px}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <AdminSidebar active="saldo" />
+  <main class="content">
+    <div class="page-head">
+      <h1>Saldo Digiflazz</h1>
+      <p>Pantau sisa deposit akun Digiflazz secara real-time</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Sisa Deposit
+      </div>
+
+      {!hasConfig && (
+        <div>
+          <span class="badge badge-warn">⚠ Belum Dikonfigurasi</span>
+          <p style="color:var(--muted);font-size:.9rem;margin:0">
+            Isi <code>DIGIFLAZZ_USERNAME</code> dan <code>DIGIFLAZZ_API_KEY</code> di file <code>.env</code> terlebih dahulu.
+          </p>
+        </div>
+      )}
+
+      {hasConfig && error && (
+        <div>
+          <span class="badge badge-err">✕ Gagal Terhubung</span>
+          <p class="err-msg">{error}</p>
+        </div>
+      )}
+
+      {hasConfig && saldo !== null && (
+        <div>
+          <span class="badge badge-ok" id="status-badge">✓ Terhubung</span>
+          <div class="saldo-amount" id="saldo-display">Rp {saldo.toLocaleString('id-ID')}</div>
+          <p class="saldo-sub">Sisa deposit akun Digiflazz</p>
+        </div>
+      )}
+
+      {hasConfig && (
+        <div>
+          <button class="btn-cek" id="btn-cek" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            Cek Saldo
+          </button>
+          <div class="last-check" id="last-check">
+            {saldo !== null ? 'Terakhir dicek: baru saja' : 'Klik tombol untuk cek saldo'}
+          </div>
+          <p class="err-msg" id="err-msg-btn" style="display:none"></p>
+        </div>
+      )}
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="font-size:.95rem;margin-bottom:8px">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Informasi
+      </div>
+      <hr class="divider"/>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8;margin:0">
+        • Saldo ini adalah sisa deposit yang digunakan untuk memproses transaksi top-up game.<br/>
+        • Pastikan IP server sudah didaftarkan di <a href="https://member.digiflazz.com/settings" target="_blank" style="font-weight:600">pengaturan Digiflazz</a>.<br/>
+        • Lihat <a href="https://developer.digiflazz.com" target="_blank" style="font-weight:600">dokumentasi API Digiflazz</a> untuk info lebih lanjut.
+      </p>
+    </div>
+  </main>
+</div>
+<script>
+const btn = document.getElementById('btn-cek') as HTMLButtonElement | null;
+const saldoDisplay = document.getElementById('saldo-display');
+const lastCheck = document.getElementById('last-check');
+const errMsg = document.getElementById('err-msg-btn');
+const badge = document.getElementById('status-badge');
+
+btn?.addEventListener('click', async () => {
+  btn.disabled = true;
+  btn.classList.add('spinning');
+  const txtNode = Array.from(btn.childNodes).find(n => n.nodeType === 3) as Text | undefined;
+  if (txtNode) txtNode.textContent = ' Mengecek...';
+  if (errMsg) errMsg.style.display = 'none';
+  try {
+    const res = await fetch('/api/admin/digiflazz/saldo');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? 'Gagal cek saldo');
+    const fmt = 'Rp ' + Number(data.deposit).toLocaleString('id-ID');
+    if (saldoDisplay) {
+      saldoDisplay.textContent = fmt;
+    } else {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = `<span class="badge badge-ok" id="status-badge">✓ Terhubung</span><div class="saldo-amount" id="saldo-display">${fmt}</div><p class="saldo-sub">Sisa deposit akun Digiflazz</p>`;
+      btn.parentElement!.insertAdjacentElement('beforebegin', wrap);
+    }
+    if (badge) { badge.className = 'badge badge-ok'; badge.textContent = '✓ Terhubung'; }
+    if (lastCheck) {
+      const now = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      lastCheck.textContent = 'Terakhir dicek: ' + now;
+    }
+  } catch (e: any) {
+    if (errMsg) { errMsg.textContent = e.message ?? 'Terjadi kesalahan'; errMsg.style.display = 'block'; }
+    if (badge) { badge.className = 'badge badge-err'; badge.textContent = '✕ Gagal'; }
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('spinning');
+    const lbl = Array.from(btn.childNodes).find(n => n.nodeType === 3) as Text | undefined;
+    if (lbl) lbl.textContent = ' Cek Saldo';
+  }
+});
+</script>
+</body>
+</html>

@@ -13,6 +13,26 @@ if (id !== 'new' && !product) return Astro.redirect('/dashboard/products');
 
 const value = (key: keyof NonNullable<typeof product>, fallback = '') => product?.[key] ?? fallback;
 const existingPackages: ProductPackage[] = product ? await getProductPackages(product) : [];
+
+// Prefill dari halaman pricelist Digiflazz: /dashboard/products/new?sku=..&name=..&price=..&brand=..&cmd=prepaid
+const q = Astro.url.searchParams;
+const prefillId = product ? '' : (q.get('id') || '').trim();
+const prefillName = product ? '' : (q.get('name') || '').trim();
+const prefillBrand = product ? '' : (q.get('brand') || '').trim();
+const prefillPrice = product || !(Number(q.get('price')) > 0) ? null : Number(q.get('price'));
+const prefillSku = product ? '' : (q.get('sku') || '').trim();
+const prefillPackage: ProductPackage | null = prefillSku ? {
+  id: 'prefill',
+  product_id: '',
+  name: prefillName || 'Paket Top Up',
+  duration: prefillBrand || 'Top Up',
+  price: prefillPrice ?? 0,
+  active: true,
+  digiflazz_sku: prefillSku,
+  requires_customer_no: q.get('cmd') !== 'pasca',
+  customer_no_label: 'User ID game',
+} : null;
+const displayPackages: ProductPackage[] = existingPackages.length ? existingPackages : prefillPackage ? [prefillPackage] : [];
 ---
 
 <!DOCTYPE html>
@@ -61,6 +81,15 @@ const existingPackages: ProductPackage[] = product ? await getProductPackages(pr
     .field input, .field select, .field textarea { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 16px; font-family: 'DM Sans', sans-serif; font-size: .9rem; color: var(--ink); background: #fbf9fe; outline: none; transition: all .2s ease; }
     .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--v); background: #fff; box-shadow: 0 0 0 4px rgba(112, 72, 232, 0.1); }
     .field textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+    .pkg-digiflazz { display: flex; flex-direction: column; gap: 12px; margin: 14px 0 4px; padding: 14px 16px; border: 1.5px dashed var(--line); border-radius: 12px; background: #fbf9fe; }
+    .pkg-digi-title { font-size: .74rem; font-weight: 800; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+    .pkg-field { display: flex; flex-direction: column; gap: 6px; }
+    .pkg-field span { font-weight: 700; font-size: .8rem; }
+    .pkg-field small { color: var(--muted); font-weight: 500; }
+    .pkg-field input[type="text"] { border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 14px; font: 500 .88rem 'DM Sans', sans-serif; color: var(--ink); background: #fff; outline: none; }
+    .pkg-field input[type="text"]:focus { border-color: var(--v); box-shadow: 0 0 0 4px rgba(112, 72, 232, 0.1); }
+    .pkg-check { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: .82rem; }
+    .pkg-check input { width: 16px; height: 16px; accent-color: var(--v); }
     .packages-section { grid-column: 1 / -1; border: 1.5px solid var(--line); border-radius: 14px; padding: 20px; background: #fdfcff; margin-top: 8px; }
     .packages-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .packages-head h3 { margin: 0; font-size: .95rem; font-weight: 800; color: var(--ink); }
@@ -131,12 +160,12 @@ const existingPackages: ProductPackage[] = product ? await getProductPackages(pr
       <form class="form-grid" id="product-form">
         <div class="field">
           <label>ID Produk <span class="hint">Huruf kecil & tanda hubung</span></label>
-          <input name="id" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" value={id === 'new' ? '' : id} placeholder="misal: canva-pro" />
+          <input name="id" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" value={id === 'new' ? prefillId : id} placeholder="misal: canva-pro" />
         </div>
 
         <div class="field">
           <label>Nama Produk</label>
-          <input name="name" required value={value('name')} placeholder="misal: Canva Pro Premium" />
+          <input name="name" required value={value('name') || prefillName} placeholder="misal: Canva Pro Premium" />
         </div>
 
         <div class="field">
@@ -150,12 +179,12 @@ const existingPackages: ProductPackage[] = product ? await getProductPackages(pr
 
         <div class="field">
           <label>Durasi Default</label>
-          <input name="duration" required value={value('duration')} placeholder="misal: 1 Bulan" />
+          <input name="duration" required value={value('duration') || prefillBrand} placeholder="misal: 1 Bulan" />
         </div>
 
         <div class="field">
           <label>Harga Default (Rp)</label>
-          <input name="price" type="number" min="1" required value={product?.price ?? ''} placeholder="misal: 25000" />
+          <input name="price" type="number" min="1" required value={product?.price ?? prefillPrice ?? ''} placeholder="misal: 25000" />
         </div>
 
         <div class="field">
@@ -209,7 +238,7 @@ const existingPackages: ProductPackage[] = product ? await getProductPackages(pr
         <div class="packages-section">
           <div class="packages-head">
             <h3>Varian & Opsi Paket Produk</h3>
-            <span class="hint">Tambahkan opsi paket atau variasi durasi jika ada</span>
+            <span class="hint">Untuk top up game: isi SKU Digiflazz di dalam kartu paket</span>
           </div>
           <div id="package-rows"></div>
           <button type="button" class="btn-add-pkg" id="add-package">
@@ -241,7 +270,7 @@ const existingPackages: ProductPackage[] = product ? await getProductPackages(pr
   </main>
 </div>
 
-<script define:vars={{ initialPackages: existingPackages.map((p) => ({ name: p.name, duration: p.duration, price: p.price, active: p.active })) }}>
+<script define:vars={{ initialPackages: (displayPackages.length ? displayPackages : [{ name: '', duration: '', price: '', active: true }]).map((p) => ({ name: p.name, duration: p.duration, price: p.price, active: p.active })) }}>
   const packageRows = document.querySelector('#package-rows');
   const packageInput = document.querySelector('#packages-input');
   const addBtn = document.querySelector('#add-package');
@@ -338,7 +367,10 @@ const existingPackages: ProductPackage[] = product ? await getProductPackages(pr
       name: (row.querySelector('.pkg-name') as HTMLInputElement).value.trim(),
       duration: (row.querySelector('.pkg-duration') as HTMLInputElement).value.trim(),
       price: Number((row.querySelector('.pkg-price') as HTMLInputElement).value),
-      active: (row.querySelector('.pkg-active') as HTMLInputElement).checked
+      active: (row.querySelector('.pkg-active') as HTMLInputElement).checked,
+      digiflazz_sku: ((row.querySelector('.pkg-sku') as HTMLInputElement | null)?.value ?? '').trim() || null,
+      requires_customer_no: (row.querySelector('.pkg-requires-no') as HTMLInputElement | null)?.checked ?? false,
+      customer_no_label: ((row.querySelector('.pkg-no-label') as HTMLInputElement | null)?.value ?? '').trim() || null,
     })).filter((item) => item.name && item.duration && item.price > 0);
 
     if (packageInput) packageInput.value = JSON.stringify(packages);
@@ -390,6 +422,51 @@ const existingPackages: ProductPackage[] = product ? await getProductPackages(pr
       (deleteBtn as HTMLButtonElement).disabled = false;
     }
   });
+</script>
+
+<script define:vars={{ existingPackagesJson: JSON.stringify(displayPackages) }}>
+  // === Top Up Game (Digiflazz): suntikkan input SKU & opsi nomor tujuan ke tiap kartu paket ===
+  // Data tersimpan diteruskan dari server agar mode edit menampilkan SKU yang sudah ada.
+  let existingPkgs = [];
+  try { existingPkgs = JSON.parse(existingPackagesJson) || []; } catch (e) { existingPkgs = []; }
+
+  function ensureDigiflazzFields(row, saved) {
+    if (!row || row.dataset.digiAugmented === '1') return;
+    row.dataset.digiAugmented = '1';
+    if (row.querySelector('.pkg-sku')) return;
+    const activeEl = row.querySelector('.pkg-active');
+    const wrap = document.createElement('div');
+    wrap.className = 'pkg-digiflazz';
+    const esc = (s) => String(s ?? '').replace(/"/g, '&quot;');
+    wrap.innerHTML =
+      '<div class="pkg-digi-title">Top Up Game via Digiflazz (opsional)</div>' +
+      '<label class="pkg-field"><span>SKU Digiflazz <small>(kosongkan untuk produk akun premium)</small></span>' +
+      '<input type="text" class="pkg-sku" placeholder="cth: MLBB100" value="' + esc(saved.digiflazz_sku) + '" /></label>' +
+      '<label class="pkg-check"><input type="checkbox" class="pkg-requires-no"' + (saved.requires_customer_no ? ' checked' : '') + ' /> Pembeli harus mengisi nomor tujuan (User ID game)</label>' +
+      '<label class="pkg-field pkg-no-label-wrap"><span>Label nomor tujuan <small>(cth: User ID (Server))</small></span>' +
+      '<input type="text" class="pkg-no-label" placeholder="User ID" value="' + esc(saved.customer_no_label || 'User ID') + '" /></label>';
+    const cb = wrap.querySelector('.pkg-requires-no');
+    const labelWrap = wrap.querySelector('.pkg-no-label-wrap');
+    const sync = () => { labelWrap.style.display = cb.checked ? '' : 'none'; };
+    cb.addEventListener('change', sync);
+    sync();
+    if (activeEl && activeEl.parentNode) activeEl.parentNode.insertBefore(wrap, activeEl);
+    else row.appendChild(wrap);
+  }
+
+  // Baris awal (server-rendered) dihidrasi sesuai urutan existingPackages;
+  // baris baru (tombol tambah paket) otomatis mendapat input kosong via observer.
+  document.querySelectorAll('.package-card').forEach((row, index) => {
+    row.dataset.digiIndex = String(index);
+    ensureDigiflazzFields(row, existingPkgs[index] || {});
+  });
+  new MutationObserver(() => {
+    document.querySelectorAll('.package-card').forEach((row) => {
+      if (row.dataset.digiAugmented === '1') return;
+      const idx = Number(row.dataset.digiIndex ?? '-1');
+      ensureDigiflazzFields(row, idx >= 0 ? (existingPkgs[idx] || {}) : {});
+    });
+  }).observe(document.body, { childList: true, subtree: true });
 </script>
 
 </body>

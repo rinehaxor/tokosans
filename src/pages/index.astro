@@ -6,18 +6,26 @@ import Footer from '../components/Footer.astro';
 
 import { formatRupiah } from '../lib/catalog';
 import { getProducts } from '../lib/products';
+import { getTopupProductIds } from '../lib/packages';
 import { getSiteUrl } from '../lib/site';
 
 const siteUrl = getSiteUrl(Astro.url.origin);
 const products = await getProducts();
-const categories = [...new Set(products.map((product) => product.category))];
+// Pisahkan produk top up game (Digiflazz) dari produk akun biasa
+const topupIds = await getTopupProductIds();
+const topupProducts = products.filter((product) => topupIds.has(product.id));
+const accountProducts = products.filter((product) => !topupIds.has(product.id));
+const categories = [...new Set(accountProducts.map((product) => product.category))];
+const topupCategories = [...new Set(topupProducts.map((product) => product.category))];
 import { getSupabaseAdmin } from '../lib/supabase';
 let productImages: Record<string, string> = {};
 let soldCounts: Record<string, number> = {};
 try {
   const db = getSupabaseAdmin();
   const { data: inventory } = await db.from('inventory').select('product_id,image_url,active');
-  for (const item of inventory ?? []) if (item.active !== false && item.image_url) productImages[item.product_id] = item.image_url;
+  for (const item of inventory ?? []) {
+    if (item.active !== false && item.image_url) productImages[item.product_id] = item.image_url;
+  }
   await Promise.all(
     products.map(async (p) => {
       const { count } = await db
@@ -84,7 +92,33 @@ const websiteSchema = {
   '@type': 'WebSite',
   'name': 'tokosans.',
   'url': siteUrl,
-  'description': 'Akses Akun Digital Premium Legal & Murah di Indonesia'
+  'description': 'Akses Akun Digital Premium Legal & Murah di Indonesia',
+  'potentialAction': {
+    '@type': 'SearchAction',
+    'target': `${siteUrl}/blog?q={search_term_string}`,
+    'query-input': 'required name=search_term_string'
+  }
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': siteUrl }
+  ]
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  'mainEntity': faqs.map(([question, answer]) => ({
+    '@type': 'Question',
+    'name': question,
+    'acceptedAnswer': {
+      '@type': 'Answer',
+      'text': answer
+    }
+  }))
 };
 
 const itemListSchema = {
@@ -125,7 +159,7 @@ const itemListSchema = {
   }))
 };
 ---
-<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#7048e8"/><meta name="description" content="Pusat langganan akun digital premium terpercaya. Canva Pro, Netflix, Spotify, CapCut Pro murah dan bergaransi full. Pembayaran QRIS otomatis realtime."/><title>tokosans. — Akses Akun Digital Premium Legal & Murah | Pengiriman Instan</title><link rel="canonical" href={siteUrl}/><link rel="manifest" href="/manifest.webmanifest"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><meta property="og:type" content="website"/><meta property="og:url" content={siteUrl}/><meta property="og:title" content="tokosans. — Akses Akun Digital Premium Legal & Murah"/><meta property="og:description" content="Pusat langganan akun digital premium terpercaya. Proses instan 24/7, QRIS otomatis, garansi penuh."/><meta property="og:image" content={`${siteUrl}/og-image.png`}/><meta property="og:site_name" content="tokosans."/><meta property="og:locale" content="id_ID"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content="tokosans. — Akses Akun Digital Premium Legal & Murah"/><meta name="twitter:description" content="Pusat langganan akun digital premium terpercaya. Proses otomatis instan, QRIS realtime, garansi penuh."/><meta name="twitter:image" content={`${siteUrl}/og-image.png`}/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/><link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png"/><script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} /><script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} /><script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} /><style>
+<html lang="id"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#7048e8"/><meta name="description" content="Pusat langganan akun digital premium terpercaya. Canva Pro, Netflix, Spotify, CapCut Pro murah dan bergaransi full. Pembayaran QRIS otomatis realtime."/><title>tokosans. — Akses Akun Digital Premium Legal & Murah | Pengiriman Instan</title><link rel="canonical" href={siteUrl}/><link rel="manifest" href="/manifest.webmanifest"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><meta property="og:type" content="website"/><meta property="og:url" content={siteUrl}/><meta property="og:title" content="tokosans. — Akses Akun Digital Premium Legal & Murah"/><meta property="og:description" content="Pusat langganan akun digital premium terpercaya. Proses instan 24/7, QRIS otomatis, garansi penuh."/><meta property="og:image" content={`${siteUrl}/og-image.png`}/><meta property="og:site_name" content="tokosans."/><meta property="og:locale" content="id_ID"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content="tokosans. — Akses Akun Digital Premium Legal & Murah"/><meta name="twitter:description" content="Pusat langganan akun digital premium terpercaya. Proses otomatis instan, QRIS realtime, garansi penuh."/><meta name="twitter:image" content={`${siteUrl}/og-image.png`}/><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/><link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png"/><script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} /><script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} /><script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} /><script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} /><script type="application/ld+json" set:html={JSON.stringify(faqSchema)} /><style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 :root{--ink:#1e142e;--muted:#6f647d;--v:#7048e8;--v-dark:#5932d2;--l:#f1ecfe;--line:#e8e1f2;--bg:#faf8ff}
 *{box-sizing:border-box}html{scroll-behavior:smooth}
@@ -202,6 +236,8 @@ h1 em{color:var(--v);font-style:normal;background:linear-gradient(135deg,#7048e8
 .section{padding:80px 0}
 .soft{background:#f6f3fc}
 .section-top{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;margin-bottom:32px}
+.section-top.center{flex-direction:column;align-items:center;text-align:center;justify-content:center}
+.section-top.center .copy{max-width:520px}
 .kicker{border:0;background:var(--l);color:var(--v)}
 .copy{max-width:420px;margin:0;color:var(--muted);line-height:1.65}
 
@@ -231,6 +267,9 @@ h1 em{color:var(--v);font-style:normal;background:linear-gradient(135deg,#7048e8
 .badge-pill{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:6px;font-size:.72rem;font-weight:600;line-height:1.2}
 .badge-blue{background:#eff6ff;color:#2563eb}
 .badge-green{background:#ecfdf5;color:#059669}
+.badge-red{background:#fef2f2;color:#dc2626}
+.badge-ready{background:#dcfce7;color:#16a34a;font-weight:700}
+.badge-garansi{background:#eff6ff;color:#2563eb;font-weight:700}
 .info-icon{opacity:.75}
 
 /* Card Price */
@@ -239,6 +278,40 @@ h1 em{color:var(--v);font-style:normal;background:linear-gradient(135deg,#7048e8
 .price-row{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
 .current-price{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:800;color:#0f172a;letter-spacing:-.02em}
 .discount-badge{background:#fffbeb;color:#b45309;border:1px solid #fef3c7;font-size:.7rem;font-weight:700;padding:2px 6px;border-radius:6px}
+
+/* Product Tab Switcher */
+.product-tabs{display:flex;gap:6px;padding:4px;background:#f0ecff;border-radius:16px;margin:0 auto 36px;max-width:440px}
+.product-tab{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;border:none;border-radius:12px;background:transparent;color:var(--muted);font:700 .92rem 'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .25s cubic-bezier(.16,1,.3,1);letter-spacing:-.01em;position:relative}
+.product-tab:hover{color:var(--ink);background:rgba(255,255,255,0.5)}
+.product-tab.active{background:#fff;color:var(--ink);box-shadow:0 4px 16px rgba(112,72,232,0.1),0 1px 3px rgba(0,0,0,0.06)}
+.product-tab .tab-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:var(--l);color:var(--v);font:700 .7rem 'DM Sans',sans-serif}
+.product-tab.active .tab-count{background:var(--v);color:#fff}
+
+/* Tab Panels */
+.tab-panel{display:none;animation:tabFadeIn .3s ease}
+.tab-panel.active{display:block}
+@keyframes tabFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Section subtitles per tab */
+.tab-subtitle{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;margin-bottom:28px}
+.tab-subtitle h3{font-size:1.5rem;color:var(--ink);margin:8px 0 0}
+.tab-subtitle p{max-width:420px;margin:0;color:var(--muted);line-height:1.65;font-size:.92rem}
+
+/* Category filters inside tabs */
+.tab-category-nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 28px}
+.tab-category-filter{border:1px solid #e2d8f7;border-radius:99px;padding:8px 16px;background:#fff;color:var(--muted);font:600 .84rem 'DM Sans';cursor:pointer;transition:all .18s;white-space:nowrap}
+.tab-category-filter.active,.tab-category-filter:hover{background:var(--v);border-color:var(--v);color:#fff;box-shadow:0 6px 16px rgba(112,72,232,0.25)}
+.tab-category-filter.game-accent{border-color:#e0d4f7}
+.tab-category-filter.game-accent.active,.tab-category-filter.game-accent:hover{background:#6d28d9;border-color:#6d28d9;box-shadow:0 6px 16px rgba(109,40,217,0.25)}
+
+/* Top-Up Game card accent */
+.topup-card{border-color:#e3d9fb;background:linear-gradient(180deg,#fff 40%,#faf7ff);position:relative;overflow:hidden}
+.topup-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#7048e8,#a78bfa);border-radius:18px 18px 0 0}
+.topup-card .card-link:hover .card-title{color:var(--v)}
+.topup-badge-game{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;background:#fef3c7;color:#92400e;font-size:.68rem;font-weight:700;letter-spacing:.02em}
+.topup-hint{display:inline-flex;align-items:center;gap:5px;margin-top:9px;padding:4px 9px;border-radius:8px;background:#f4f1ff;color:#6040c7;font-size:.7rem;font-weight:700}
+
+/* WhatsApp link button (used inside checkout page) */
 
 /* Center Proof & Other Sections */
 .center{text-align:center}
@@ -286,10 +359,13 @@ h1 em{color:var(--v);font-style:normal;background:linear-gradient(135deg,#7048e8
   .proof-logos{grid-template-columns:repeat(3,1fr)}
   .steps{grid-template-columns:1fr;gap:20px}
   .step{padding-top:16px}
+  .product-tabs{max-width:100%;border-radius:14px}
+  .product-tab{padding:12px 14px;font-size:.84rem}
+  .tab-subtitle{flex-direction:column;align-items:flex-start;gap:8px}
 }
 
 @media(max-width:640px){
-  .category-nav{
+  .category-nav,.tab-category-nav{
     flex-wrap:nowrap;
     overflow-x:auto;
     -webkit-overflow-scrolling:touch;
@@ -297,7 +373,7 @@ h1 em{color:var(--v);font-style:normal;background:linear-gradient(135deg,#7048e8
     padding:4px 18px 10px;
     scrollbar-width:none;
   }
-  .category-nav::-webkit-scrollbar{display:none}
+  .category-nav::-webkit-scrollbar,.tab-category-nav::-webkit-scrollbar{display:none}
   .catalog{grid-template-columns:1fr;gap:14px}
   .card{padding:16px;border-radius:16px}
   .card:active{transform:scale(0.99)}
@@ -336,7 +412,7 @@ h1 em{color:var(--v);font-style:normal;background:linear-gradient(135deg,#7048e8
         <h1>Layanan digital<br/><em>tanpa ribet.</em></h1>
         <p class="lead">Dapatkan akses resmi akun aplikasi digital favoritmu untuk produktivitas, desain, dan hiburan. Diproses otomatis realtime, bergaransi penuh, dan kredensial langsung terkirim ke email &amp; layar.</p>
         <div class="actions">
-          <a class="button primary" href="#produk">Lihat koleksi</a>
+          <a class="button primary" href="/#produk">Lihat koleksi</a>
           <a class="button secondary" href="#cara-kerja">Cara kerjanya</a>
         </div>
         <div class="trust">
@@ -377,26 +453,44 @@ h1 em{color:var(--v);font-style:normal;background:linear-gradient(135deg,#7048e8
 
 <section id="produk" class="section">
   <div class="shell">
-    <div class="section-top">
-      <div>
-        <span class="kicker">Koleksi pilihan</span>
-        <h2>Temukan yang kamu butuhkan.</h2>
-      </div>
-      <p class="copy">Pilih layanan favoritmu, lanjutkan ke checkout, dan dapatkan detail akun dalam satu alur cepat.</p>
-    </div>
-    
-    <div class="category-nav" aria-label="Filter kategori">
-      <button class="category-filter active" type="button" data-category="all">Semua</button>
-      {categories.map((category) => <button class="category-filter" type="button" data-category={category}>{category}</button>)}
+    <div class="section-top center">
+      <span class="kicker">Koleksi Kami</span>
+      <h2>Top-Up Game &amp; Produk Digital.</h2>
+      <p class="copy">Pilih antara isi diamond/saldo game atau langganan akun digital premium favoritmu.</p>
     </div>
 
-    <div class="catalog">
-      {products.map((product) => {
+    <div class="product-tabs" role="tablist" aria-label="Jenis produk">
+      <button class="product-tab active" type="button" role="tab" aria-selected="true" data-tab="premium" id="tab-premium" aria-controls="panel-premium">
+        Produk Digital
+        <span class="tab-count">{accountProducts.length}</span>
+      </button>
+      <button class="product-tab" type="button" role="tab" aria-selected="false" data-tab="topup" id="tab-topup" aria-controls="panel-topup">
+        Top-Up Game
+        <span class="tab-count">{topupProducts.length}</span>
+      </button>
+    </div>
+
+    <div class="tab-panel" role="tabpanel" id="panel-topup" aria-labelledby="tab-topup" hidden>
+      <div class="tab-subtitle">
+        <div>
+          <h3>Isi diamond &amp; saldo game favoritmu.</h3>
+          <p>Masukkan User ID, bayar dengan QRIS, saldo langsung masuk ke akun gamemu otomatis 24/7.</p>
+        </div>
+      </div>
+      {topupCategories.length > 0 && (
+        <div class="tab-category-nav" aria-label="Filter kategori game">
+          <button class="tab-category-filter game-accent active" type="button" data-tc="all">Semua Game</button>
+          {topupCategories.map((cat) => <button class="tab-category-filter game-accent" type="button" data-tc={cat}>{cat}</button>)}
+        </div>
+      )}
+
+      <div class="catalog">
+      {topupProducts.map((product) => {
         const origPrice = product.original_price && product.original_price > product.price ? product.original_price : null;
         const discountPct = origPrice ? Math.round(((origPrice - product.price) / origPrice) * 100) : null;
         return (
-          <article class="card" data-category={product.category}>
-            <a href={`/checkout/${product.id}`} class="card-link" aria-label={product.name}>
+          <article class="card topup-card" data-tc={product.category}>
+            <a href={`/topup/${product.id}`} class="card-link" aria-label={product.name}>
               <div class="card-header">
                 <div class="app-icon">
                   {productImages[product.id] ? (
@@ -416,13 +510,10 @@ h1 em{color:var(--v);font-style:normal;background:linear-gradient(135deg,#7048e8
 
               <div class="card-badges">
                 <span class="badge-pill badge-blue">
-                  Ready
-                  <svg class="info-icon" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                  Proses Instan
+                  <svg class="info-icon" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                 </span>
-                <span class="badge-pill badge-green">
-                  Garansi
-                  <svg class="info-icon" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-                </span>
+                <span class="topup-badge-game">Game Top-Up</span>
               </div>
 
               <div class="card-price-section">
@@ -431,11 +522,73 @@ h1 em{color:var(--v);font-style:normal;background:linear-gradient(135deg,#7048e8
                   <span class="current-price">{formatRupiah(product.price)}</span>
                   {discountPct !== null && <span class="discount-badge">-{discountPct}%</span>}
                 </div>
+                <span class="topup-hint">Top up via User ID</span>
               </div>
             </a>
           </article>
         );
       })}
+    </div>
+    </div>
+
+    <div class="tab-panel active" role="tabpanel" id="panel-premium" aria-labelledby="tab-premium">
+      <div class="tab-subtitle">
+        <div>
+          <h3>Temukan yang kamu butuhkan.</h3>
+          <p>Pilih layanan favoritmu, lanjutkan ke checkout, dan dapatkan detail akun dalam satu alur cepat.</p>
+        </div>
+      </div>
+
+      <div class="tab-category-nav" aria-label="Filter kategori">
+        <button class="tab-category-filter active" type="button" data-category="all">Semua</button>
+        {categories.map((category) => <button class="tab-category-filter" type="button" data-category={category}>{category}</button>)}
+      </div>
+
+      <div class="catalog">
+        {accountProducts.map((product) => {
+          const origPrice = product.original_price && product.original_price > product.price ? product.original_price : null;
+          const discountPct = origPrice ? Math.round(((origPrice - product.price) / origPrice) * 100) : null;
+          return (
+            <article class="card" data-category={product.category}>
+              <a href={`/checkout/${product.id}`} class="card-link" aria-label={product.name}>
+                <div class="card-header">
+                  <div class="app-icon">
+                    {productImages[product.id] ? (
+                      <img src={productImages[product.id]} alt={product.name} loading="lazy" />
+                    ) : (
+                      <div class="app-icon-fallback">{product.name.charAt(0).toUpperCase()}</div>
+                    )}
+                  </div>
+                  <div class="card-title-group">
+                    <h3 class="card-title">{product.name}</h3>
+                    <div class="card-rating">
+                      <span class="star">★</span>
+                      <span>{seededRating(product.id)}{soldCounts[product.id] ? ` · Terjual ${formatSold(soldCounts[product.id])}` : ''}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-badges">
+                  <span class="badge-pill badge-ready">
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Ready All
+                  </span>
+                  <span class="badge-pill badge-garansi">
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Garansi
+                  </span>
+                </div>
+                <div class="card-price-section">
+                  {origPrice && <div class="original-price">{formatRupiah(origPrice)}</div>}
+                  <div class="price-row">
+                    <span class="current-price">{formatRupiah(product.price)}</span>
+                    {discountPct !== null && <span class="discount-badge">-{discountPct}%</span>}
+                  </div>
+                </div>
+              </a>
+            </article>
+          );
+        })}
+      </div>
     </div>
   </div>
 </section>
@@ -546,12 +699,51 @@ h1 em{color:var(--v);font-style:normal;background:linear-gradient(135deg,#7048e8
 <Footer />
 <RecentSalesToast />
 <script>
-  document.querySelectorAll('.category-filter').forEach((button) => {
+  /* Tab switching */
+  document.querySelectorAll('.product-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const target = (tab as HTMLElement).dataset.tab;
+      /* Update tab active state & aria */
+      document.querySelectorAll('.product-tab').forEach((t) => {
+        t.classList.toggle('active', t === tab);
+        (t as HTMLElement).setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      });
+      /* Show/hide panels */
+      document.querySelectorAll('.tab-panel').forEach((panel) => {
+        const isTopup = target === 'topup' && panel.id === 'panel-topup';
+        const isPremium = target === 'premium' && panel.id === 'panel-premium';
+        panel.classList.toggle('active', isTopup || isPremium);
+        (panel as HTMLElement).hidden = !(isTopup || isPremium);
+      });
+      /* Update hash without scroll */
+      history.replaceState(null, '', target === 'topup' ? '#produk' : '#produk-premium');
+    });
+  });
+
+  /* Handle hash on load — default to premium tab */
+  if (location.hash === '#produk') {
+    const topupTab = document.querySelector('.product-tab[data-tab="topup"]') as HTMLElement;
+    if (topupTab) topupTab.click();
+  }
+
+  /* Premium category filter */
+  document.querySelectorAll('.tab-category-filter:not(.game-accent)').forEach((button) => {
     button.addEventListener('click', () => {
       const category = (button as HTMLElement).dataset.category;
-      document.querySelectorAll('.category-filter').forEach((item) => item.classList.toggle('active', item === button));
-      document.querySelectorAll('.catalog .card').forEach((card) => {
+      document.querySelectorAll('.tab-category-filter:not(.game-accent)').forEach((item) => item.classList.toggle('active', item === button));
+      document.querySelectorAll('#panel-premium .catalog .card').forEach((card) => {
         (card as HTMLElement).hidden = category !== 'all' && (card as HTMLElement).dataset.category !== category;
+      });
+    });
+  });
+
+  /* Top-up game category filter */
+  document.querySelectorAll('.tab-category-filter.game-accent').forEach((button) => {
+    button.addEventListener('click', () => {
+      const category = (button as HTMLElement).dataset.tc;
+      document.querySelectorAll('.tab-category-filter.game-accent').forEach((item) => item.classList.toggle('active', item === button));
+      document.querySelectorAll('#panel-topup .catalog .card').forEach((card) => {
+        (card as HTMLElement).hidden = category !== 'all' && (card as HTMLElement).dataset.tc !== category;
       });
     });
   });

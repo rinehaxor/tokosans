@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { getSiteUrl } from '../lib/site';
 import { getPublishedPosts } from '../lib/blog';
 import { getProducts } from '../lib/products';
+import { getProductPackages } from '../lib/packages';
 
 function escapeXml(value: string): string {
   return value
@@ -23,9 +24,9 @@ export const GET: APIRoute = async ({ request }) => {
   const staticPages: { path: string; changefreq?: string; priority?: string; lastmod?: string }[] = [
     { path: '/', changefreq: 'daily', priority: '1.0' },
     { path: '/blog', changefreq: 'daily', priority: '0.8' },
-    { path: '/syarat-ketentuan', changefreq: 'monthly', priority: '0.4' },
-    { path: '/kebijakan-privasi', changefreq: 'monthly', priority: '0.4' },
-    { path: '/kebijakan-refund', changefreq: 'monthly', priority: '0.4' },
+    { path: '/syarat-ketentuan', changefreq: 'yearly', priority: '0.3' },
+    { path: '/kebijakan-privasi', changefreq: 'yearly', priority: '0.3' },
+    { path: '/kebijakan-refund', changefreq: 'yearly', priority: '0.3' },
   ];
 
   let posts: Awaited<ReturnType<typeof getPublishedPosts>> = [];
@@ -35,12 +36,14 @@ export const GET: APIRoute = async ({ request }) => {
     /* Supabase tidak tersedia — sitemap tetap berisi halaman statis */
   }
 
-  let products: Awaited<ReturnType<typeof getProducts>> = [];
+  let rawProducts: Awaited<ReturnType<typeof getProducts>> = [];
   try {
-    products = await getProducts();
+    rawProducts = await getProducts();
   } catch {
     /* fallback ke katalog default bila gagal */
   }
+
+  const products = [...new Map(rawProducts.map(p => [p.id, p])).values()];
 
   const urls: { loc: string; lastmod?: string; changefreq?: string; priority?: string }[] = [
     ...staticPages.map((page) => ({
@@ -49,13 +52,21 @@ export const GET: APIRoute = async ({ request }) => {
       changefreq: page.changefreq,
       priority: page.priority,
     })),
-    ...products
+    ...await Promise.all(products
       .filter((p) => p.active !== false)
-      .map((p) => ({
-        loc: `${site}/checkout/${encodeURIComponent(p.id)}`,
-        lastmod: '',
-        changefreq: 'weekly',
-        priority: '0.9',
+      .map(async (p) => {
+        let isTopup = false;
+        try {
+          const pkgs = await getProductPackages(p);
+          isTopup = pkgs.some((pkg) => pkg.requires_customer_no === true);
+        } catch { /* default ke checkout */ }
+        const prefix = isTopup ? '/topup' : '/checkout';
+        return {
+          loc: `${site}${prefix}/${encodeURIComponent(p.id)}`,
+          lastmod: '',
+          changefreq: 'weekly',
+          priority: isTopup ? '0.8' : '0.9',
+        };
       })),
     ...posts.map((post) => ({
       loc: `${site}/blog/${post.slug}`,

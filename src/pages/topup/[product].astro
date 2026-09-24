@@ -1,0 +1,275 @@
+---
+import { formatRupiah } from '../../lib/catalog';
+import { getProduct } from '../../lib/products';
+import { getProductPackages } from '../../lib/packages';
+import { getSupabaseAdmin } from '../../lib/supabase';
+import { getSiteUrl } from '../../lib/site';
+import CheckoutButton from '../../components/CheckoutButton';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import RecentSalesToast from '../../components/RecentSalesToast.astro';
+
+const siteUrl = getSiteUrl(Astro.url.origin);
+const id = Astro.params.product;
+const product = id ? await getProduct(id) : undefined;
+
+if (!product) return Astro.redirect('/');
+const packages = (await getProductPackages(product)).filter((item) => item.active);
+// Halaman ini khusus top up Digiflazz: minimal satu paket punya SKU.
+const topupPackages = packages.filter((item) => item.digiflazz_sku);
+if (!topupPackages.length) return Astro.redirect(`/checkout/${encodeURIComponent(product.id)}`, 301);
+const customerNoLabel = packages.find((item) => item.requires_customer_no === true)?.customer_no_label?.trim() || 'User ID game';
+
+// Hitung transaksi top up sukses per SKU (urutan paket terlaris) + gambar produk
+let skuCounts: Record<string, number> = {};
+let productImage = product.image_url || '';
+try {
+  const db = getSupabaseAdmin();
+  const { data: inventory } = await db.from('inventory').select('stock,active,image_url').eq('product_id', product.id).maybeSingle();
+  if (inventory?.image_url) productImage = inventory.image_url;
+  const { data: items } = await db.from('order_items').select('digiflazz_sku, orders!inner(status)').eq('product_id', product.id).in('orders.status', ['paid', 'completed']);
+  for (const item of items ?? []) {
+    const sku = (item as { digiflazz_sku?: string | null }).digiflazz_sku;
+    if (sku) skuCounts[sku] = (skuCounts[sku] ?? 0) + 1;
+  }
+} catch { /* validasi final tetap dilakukan oleh API checkout */ }
+
+// Paket terlaris ditampilkan pertama
+const preferredFirstIndex = topupPackages.reduce((best, item, index) => ((skuCounts[item.digiflazz_sku!] ?? 0) > (skuCounts[topupPackages[best]?.digiflazz_sku!] ?? 0) ? index : best), 0);
+const firstSelectedIndex = preferredFirstIndex;
+
+const benefits = [
+  ['Proses otomatis 24/7', 'Saldo dikirim ke akun gamemu segera setelah pembayaran terkonfirmasi.'],
+  ['Tanpa perlu login', 'Cukup masukkan User ID/ID akun game — akunmu tetap aman penuh.'],
+  ['Harga transparan', 'Total pembayaran sesuai nominal paket yang kamu pilih, tanpa biaya tersembunyi.'],
+  ['Pembayaran QRIS', 'Bayar via e-wallet (Dana, GoPay, OVO, ShopeePay) atau mobile banking.'],
+];
+
+const topupFaqs = [
+  ['Berapa lama proses top up?', 'Setelah pembayaran QRIS terkonfirmasi otomatis, saldo diteruskan ke server game. Umumnya masuk dalam hitungan detik hingga beberapa menit.'],
+  ['Bagaimana jika salah memasukkan User ID?', 'Pastikan ID benar sebelum membayar — top up ke ID yang salah tidak dapat dibatalkan atau dana dikembalikan. Untuk Mobile Legends, tulis format User ID(Server), contoh: 12345678(2345).'],
+  ['Apakah saya perlu memberikan password akun?', 'Tidak pernah. Kami hanya membutuhkan User ID/ID tujuan yang terlihat di profil gamemu.'],
+  ['Bagaimana cara cek status pesanan?', 'Simpan halaman pembayaran atau gunakan fitur Cek Pesanan dengan email kamu untuk melihat status top up secara realtime.'],
+];
+
+const canonicalUrl = `${siteUrl}/topup/${encodeURIComponent(product.id)}`;
+const metaDescription = `Top up ${product.name} murah, legal & proses instan di tokosans. Cukup masukkan User ID, bayar QRIS, saldo langsung masuk otomatis 24/7.`;
+
+const productSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  'name': product.name,
+  'description': product.description || metaDescription,
+  'image': productImage || `${siteUrl}/favicon.svg`,
+  'sku': product.sku || `TS-${product.id.toUpperCase()}`,
+  'brand': { '@type': 'Brand', 'name': product.brand || product.name },
+  'offers': {
+    '@type': 'Offer',
+    'url': canonicalUrl,
+    'priceCurrency': 'IDR',
+    'price': product.price,
+    'priceValidUntil': '2026-12-31',
+    'itemCondition': 'https://schema.org/NewCondition',
+    'availability': 'https://schema.org/InStock',
+    'seller': { '@type': 'Organization', 'name': 'tokosans.', 'url': siteUrl }
+  }
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  'itemListElement': [
+    { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': siteUrl },
+    { '@type': 'ListItem', 'position': 2, 'name': 'Top-Up Game', 'item': `${siteUrl}/#produk` },
+    { '@type': 'ListItem', 'position': 3, 'name': product.name, 'item': canonicalUrl }
+  ]
+};
+---
+---
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#7048e8" />
+    <title>Top Up {product.name} Murah & Instan | tokosans.</title>
+    <meta name="description" content={metaDescription} />
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <meta name="robots" content="noindex, follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="product" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={`Top Up ${product.name} Murah & Instan — tokosans.`} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:image" content={productImage || `${siteUrl}/og-image.png`} />
+    <meta property="og:site_name" content="tokosans." />
+    <meta property="og:locale" content="id_ID" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={`Top Up ${product.name} — tokosans.`} />
+    <meta name="twitter:description" content={metaDescription} />
+    <meta name="twitter:image" content={productImage || `${siteUrl}/og-image.png`} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180.png" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json" set:html={JSON.stringify(productSchema)} />
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+  </head>
+  <style is:global>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+    :root { --ink:#201630; --muted:#746b80; --violet:#7048e8; --line:#e8e2f0; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:linear-gradient(120deg,#fbfaff,#eef2ff,#fbfaff); color:var(--ink); font-family:'DM Sans',sans-serif; }
+    .page { min-height:100vh; background-image:linear-gradient(#6f55bc0a 1px,transparent 1px),linear-gradient(90deg,#6f55bc0a 1px,transparent 1px); background-size:36px 36px; }
+    .shell { width:min(1100px,calc(100% - 40px)); margin:auto; }
+    .topbar-wrapper { position:sticky; top:0; z-index:1000; background:rgba(251,250,255,0.88); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-bottom:1px solid #e5e0ef; }
+    .topbar { height:76px; display:flex; align-items:center; justify-content:space-between; }
+    .back { color:#594b70; font-size:.88rem; font-weight:700; text-decoration:none; }
+    .back:hover { color:var(--violet); }
+    .crumb { display:flex; gap:9px; margin:28px 0 16px; color:#81778c; font-size:.8rem; }
+    .crumb a { color:inherit; text-decoration:none; }
+    .crumb strong { color:#4d405d; }
+    .layout { display:grid; grid-template-columns:320px minmax(0,1fr); gap:24px; align-items:start; padding-bottom:64px; }
+    .side { position:sticky; top:96px; }
+    .card { border:1px solid var(--line); border-radius:18px; background:#fff; box-shadow:0 16px 38px #3320520c; }
+    .product-card { padding:20px; border-radius:20px; }
+    .product-card .card-header{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+    .product-card .app-icon{width:56px;height:56px;min-width:56px;border-radius:16px;background:#f8fafc;border:1px solid #f1f5f9;box-shadow:0 4px 10px rgba(0,0,0,0.04);display:grid;place-items:center;overflow:hidden;font-size:1.7rem}
+    .product-card .app-icon img{width:100%;height:100%;object-fit:cover;border-radius:16px}
+    .product-card .card-title-group{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+    .product-card .product-name{margin:0;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.15rem;color:#1e1b2e;line-height:1.2}
+    .product-card .card-rating{display:flex;align-items:center;gap:4px;font-size:.78rem;color:#64748b;font-weight:500}
+    .product-card .card-rating .star{color:#eab308;font-size:.88rem}
+    .product-card .product-desc{margin:10px 0 0;color:var(--muted);font-size:.86rem;line-height:1.5}
+    .card-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+    .badge-pill{display:inline-flex;align-items:center;gap:3px;padding:4px 9px;border-radius:8px;font-size:.75rem;font-weight:600;line-height:1}
+    .badge-blue{background:#eff6ff;color:#2563eb}
+    .badge-green{background:#f0fdf4;color:#16a34a}
+    .info-icon{opacity:.7}
+    .benefit-card { margin-top:16px; padding:20px; }
+    .benefit-card h2 { margin:0 0 15px; font:800 1rem 'Plus Jakarta Sans'; }
+    .faq-card { margin-top:16px; padding:20px; }
+    .faq-card h2 { margin:0 0 15px; font:800 1rem 'Plus Jakarta Sans'; }
+    .faq-item { margin:15px 0; }
+    .faq-item b { display:block; font-size:.82rem; }
+    .faq-item p { margin:3px 0 0; color:var(--muted); font-size:.75rem; line-height:1.5; }
+    .benefit { display:grid; grid-template-columns:17px 1fr; gap:9px; margin:15px 0; }
+    .tick { color:#18ad70; font-weight:800; }
+    .benefit b { display:block; font-size:.82rem; }
+    .benefit p { margin:3px 0 0; color:var(--muted); font-size:.75rem; line-height:1.4; }
+    .safe { display:flex; gap:9px; align-items:center; margin-top:16px; padding:13px 14px; border:1px solid #ded8ec; border-radius:14px; background:#ffffffa8; color:#6c6177; font-size:.76rem; line-height:1.35; }
+    .safe-mark { color:#18ad70; font-size:1rem; }
+    .flow { display:grid; gap:18px; }
+    .step { overflow:hidden; }
+    .step-head { display:flex; gap:10px; align-items:center; padding:20px 22px; border-bottom:1px solid #eeeaf3; font:800 1rem 'Plus Jakarta Sans'; }
+    .number { display:grid; place-items:center; width:23px; height:23px; border-radius:50%; background:var(--violet); color:#fff; font:800 .72rem 'DM Sans'; }
+    .step-body { padding:22px; }
+    .choice-label,.field-label { display:block; margin-bottom:9px; color:#40354d; font-size:.82rem; font-weight:700; }
+    .package-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
+    .choice { display:block; min-width:0; cursor:pointer; position:relative; }
+    .choice input { position:absolute; opacity:0; }
+    .choice > span { display:flex; min-width:0; min-height:53px; align-items:center; justify-content:space-between; gap:10px; padding:11px 14px; border:1px solid #ded9e7; border-radius:12px; background:#fff; font-size:.84rem; font-weight:700; }
+    .choice > span > span { min-width:0; }
+    .choice small { display:block; color:var(--violet); font-size:.72rem; }
+    .choice .pkg-note { display:block; margin-top:2px; color:#9b8fb4; font-size:.68rem; font-weight:600; }
+    .choice input:checked + span { border-color:#a78bfa; background:#faf7ff; box-shadow:0 0 0 2px #7048e82b; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .field input { width:100%; height:47px; padding:0 13px; border:1px solid #ded9e7; border-radius:10px; color:var(--ink); font:inherit; outline:none; }
+    .field input:focus { border-color:#a78bfa; box-shadow:0 0 0 3px #7048e81e; }
+    .field-help { margin:7px 0 0; color:#81778c; font-size:.74rem; }
+    .game-id-field { grid-column:1/-1; }
+    .game-id-field input { letter-spacing:.4px; font-weight:600; }
+    .payment-option { display:flex; align-items:center; gap:13px; padding:14px; border:1px solid #a78bfa; border-radius:12px; background:#faf7ff; color:#3d2a6e; font-size:.86rem; font-weight:700; }
+    .qris { display:grid; place-items:center; width:43px; height:32px; border:1px solid #d8e2f8; border-radius:7px; background:#fff; color:#1d2636; font:800 .69rem 'Plus Jakarta Sans'; letter-spacing:-1px; }
+    .payment-option small { display:block; margin-top:3px; color:#75829a; font-weight:500; }
+    .summary-body { padding:20px 22px 22px; }
+    .summary-row { display:flex; justify-content:space-between; gap:18px; margin:11px 0; color:#73697e; font-size:.87rem; }
+    .summary-row b { color:var(--ink); }
+    .divider { height:1px; margin:18px 0; background:#ece8f1; }
+    .total { display:flex; justify-content:space-between; align-items:end; }
+    .total span { font-size:.88rem; font-weight:700; }
+    .total strong { color:var(--violet); font:800 1.45rem 'Plus Jakarta Sans'; letter-spacing:-.06em; }
+    .pay { width:100%; margin-top:21px; padding:18px 16px 15px; border:0; border-radius:16px; background:linear-gradient(135deg,#7048e8 0%,#9861ff 100%); color:#fff; font:800 1rem 'Plus Jakarta Sans'; letter-spacing:.2px; cursor:pointer; box-shadow:0 8px 28px #7048e840, 0 2px 8px #7048e820; transition:transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease; position:relative; overflow:hidden; animation:pay-breathe 3s ease-in-out infinite; }
+    .pay::before { content:''; position:absolute; inset:0; background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.2) 50%,transparent 60%); transform:translateX(-100%); transition:transform .6s ease; }
+    .pay:hover::before { transform:translateX(100%); }
+    .pay:hover { filter:brightness(1.08); transform:translateY(-2px) scale(1.012); box-shadow:0 14px 38px #7048e850, 0 4px 12px #7048e830; animation:none; }
+    .pay:active { transform:scale(.97); box-shadow:0 4px 12px #7048e828; animation:none; }
+    .pay:disabled { cursor:wait; opacity:.85; transform:none; filter:none; animation:none; }
+    .pay.loading { display:flex; flex-direction:row; align-items:center; justify-content:center; gap:10px; animation:none; }
+    .pay.loading::before { display:none; }
+    @keyframes pay-breathe { 0%,100% { box-shadow:0 8px 28px #7048e840,0 2px 8px #7048e820; } 50% { box-shadow:0 10px 36px #7048e860,0 0 0 7px #7048e814; } }
+    .pay small { display:block; margin-top:3px; color:#e3d8ff; font-size:.7rem; font-weight:600; letter-spacing:.1px; }
+    .secure-note { margin:12px 0 0; text-align:center; color:#80768a; font-size:.73rem; }
+    .footer { padding:23px 0; border-top:1px solid #e6e1ed; background:#ffffffa6; color:#766c81; font-size:.77rem; }
+    .footer .shell { display:flex; justify-content:space-between; gap:15px; }
+    .footer strong { color:#51445f; }
+    @media(max-width:780px) { .layout { grid-template-columns:1fr; } .side { position:static; display:grid; grid-template-columns:1fr 1fr; gap:14px; } .benefit-card { margin-top:0; } .safe { grid-column:1/-1; } .crumb { margin-top:22px; } .topbar { height:64px; } }
+    @media(max-width:540px) { .shell { width:min(100% - 28px,1100px); } .topbar .back { font-size:.77rem; } .layout { gap:16px; padding-bottom:36px; } .side { display:block; } .benefit-card { margin-top:14px; } .form-grid { grid-template-columns:1fr; } .footer .shell { display:block; } .footer span+span { display:block; margin-top:7px; } }
+  </style>
+  <body>
+    <div class="page">
+      <Header />
+      <main class="shell">
+        <nav class="crumb" aria-label="Breadcrumb"><a href="/">Beranda</a><span>/</span><a href="/#topup">Top-Up Game</a><span>/</span><strong>{product.name}</strong></nav>
+        <div class="layout">
+          <aside class="side">
+            <section class="card product-card">
+              <div class="card-header">
+                <div class="app-icon">
+                  {productImage ? <img src={productImage} alt={product.name} /> : <span>{product.icon || '🎮'}</span>}
+                </div>
+                <div class="card-title-group">
+                  <h1 class="product-name">{product.name}</h1>
+                  <div class="card-rating">
+                    <span class="star">★</span>
+                    <span>4.9 · Proses instan</span>
+                  </div>
+                </div>
+              </div>
+              <p class="product-desc">{product.description}</p>
+              <div class="card-badges">
+                <span class="badge-pill badge-blue">Top Up Instan <svg class="info-icon" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
+                <span class="badge-pill badge-green">24/7 Otomatis <svg class="info-icon" viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+              </div>
+            </section>
+            <section class="card benefit-card"><h2>Kenapa top up di tokosans.?</h2>{benefits.map(([title, text]) => <div class="benefit"><span class="tick">✓</span><div><b>{title}</b><p>{text}</p></div></div>)}</section>
+            <section class="card faq-card">
+              <h2>Top up {product.name}</h2>
+              {topupFaqs.map(([question, answer]) => <div class="faq-item"><b>{question}</b><p>{answer}</p></div>)}
+            </section>
+            <div class="safe"><span class="safe-mark">◈</span><span>Top up diproses otomatis 24/7 langsung ke server game setelah pembayaran terkonfirmasi.</span></div>
+          </aside>
+          <form class="flow" action="/api/checkout" method="post" data-product-title={product.name}>
+            <input type="hidden" name="productId" value={product.id} />
+            <input type="hidden" name="paymentMethod" value="tokopay" />
+            <section class="card step"><div class="step-head"><span class="number">1</span>Pilih nominal</div><div class="step-body"><span class="choice-label">Nominal tersedia</span><div class="package-list">{topupPackages.map((item, index) => {
+              const sold = skuCounts[item.digiflazz_sku!] ?? 0;
+              return <label class="choice"><input type="radio" checked={index === firstSelectedIndex} required name="packageId" value={item.id} /><span><span>{item.name}{item.name.trim().toLowerCase() !== item.duration.trim().toLowerCase() && <small>{item.duration}</small>}{sold > 0 && <span class="pkg-note">Terjual {sold}x</span>}</span><b>{formatRupiah(item.price)}</b></span></label>;
+            })}</div></div></section>
+            <section class="card step"><div class="step-head"><span class="number">2</span>Data akun game &amp; pembeli</div><div class="step-body"><div class="form-grid"><label class="field game-id-field"><span class="field-label">{customerNoLabel}</span><input required name="customer_no" placeholder="cth: 12345678(2345)" /><p class="field-help">Pastikan ID benar — top up tidak dapat dibatalkan setelah diproses. Mobile Legends: tulis User ID(Server).</p></label><label class="field"><span class="field-label">Nama lengkap</span><input required name="name" autocomplete="name" placeholder="Masukkan nama lengkap" /><p class="field-help">Untuk mengenali pesananmu.</p></label><label class="field"><span class="field-label">Alamat email</span><input required type="email" name="email" autocomplete="email" placeholder="pembeli@email.com" /><p class="field-help">Info pesanan dikirim ke email ini.</p></label></div></div></section>
+            <div class="payment-option"><div class="qris">QRIS</div><div>Pembayaran otomatis<small>Scan dari e-wallet (Dana, GoPay, OVO, ShopeePay) atau mobile banking setelah pesanan dibuat.</small></div></div>
+            <section class="card step"><div class="step-head"><span class="number">3</span>Ringkasan pembayaran</div><div class="summary-body">
+              <div class="summary-row"><span id="summary-name" data-product-title={product.name} data-package-name={topupPackages[firstSelectedIndex]?.duration}>{product.name} · {topupPackages[firstSelectedIndex]?.duration}</span><b id="summary-price" data-package-price={topupPackages[firstSelectedIndex]?.price}>{formatRupiah(topupPackages[firstSelectedIndex]?.price ?? product.price)}</b></div>
+              <div class="summary-row"><span>Metode pembayaran</span><b>QRIS Otomatis</b></div>
+              <div class="divider"></div>
+              <div class="total"><span>Total pembayaran</span><strong id="summary-total">{formatRupiah(topupPackages[firstSelectedIndex]?.price ?? product.price)}</strong></div>
+              <CheckoutButton client:load />
+              <p class="secure-note">Dengan melanjutkan, kamu menyetujui bahwa top up ke ID yang salah tidak dapat di-refund.</p>
+            </div></section>
+          </form>
+        </div>
+      </main><script define:vars={{ productName: product.name, packageData: topupPackages.map((item) => ({ id: item.id, duration: item.duration, price: item.price })) }}>document.querySelectorAll('input[name="packageId"]').forEach((input) => input.addEventListener('change', () => { const item = packageData.find((entry) => entry.id === input.value); if (!item) return; const format = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }); document.querySelector('#summary-name').textContent = `${productName} · ${item.duration}`; document.querySelector('#summary-price').textContent = format.format(item.price); document.querySelector('#summary-total').textContent = format.format(item.price); }));</script>
+      <Footer />
+      <RecentSalesToast />
+    </div>
+  </body>
+</html>

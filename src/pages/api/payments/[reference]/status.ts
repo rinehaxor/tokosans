@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import { getSupabaseAdmin } from '../../../../lib/supabase';
-import { checkTokopayOrder, isTokopaySuccessful } from '../../../../lib/tokopay';
 import { assignAccount, triggerEmailDelivery, triggerOrderNotifications } from '../../../../lib/order-fulfillment';
+import { checkTokopayOrder, isTokopaySuccessful } from '../../../../lib/tokopay';
+import { checkDigiflazzOrder, isDigiflazzSuccessful } from '../../../../lib/digiflazz';
+import { processTopupFulfillment } from '../../../../lib/topup';
 
 export const GET: APIRoute = async ({ params }) => {
    try {
@@ -21,28 +23,57 @@ export const GET: APIRoute = async ({ params }) => {
       }
 
       if (data.status !== 'paid' && params.reference) {
-         const tokopay = await checkTokopayOrder(params.reference);
-         if (tokopay && isTokopaySuccessful(tokopay.status)) {
-            const transactionId = tokopay.trx_id ?? null;
+        let provider: 'tokopay' | 'digiflazz' | null = data.provider as 'tokopay' | 'digiflazz' | null;
+        if (!provider) {
+          provider = 'tokopay';
+        }
+
+        if (provider === 'digiflazz') {
+          const digiflazz = await checkDigiflazzOrder(params.reference);
+          if (digiflazz && isDigiflazzSuccessful(digiflazz.status)) {
             const { data: updated, error: paymentError } = await db
-               .from('payments')
-               .update({ status: 'paid', provider_transaction_id: transactionId, paid_at: new Date().toISOString() })
-               .eq('id', data.id)
-               .neq('status', 'paid')
-               .select('id');
+              .from('payments')
+              .update({ status: 'paid', provider_transaction_id: digiflazz.sn || null, paid_at: new Date().toISOString() })
+              .eq('id', data.id)
+              .neq('status', 'paid')
+              .select('id');
             if (paymentError) throw paymentError;
 
             if (updated && updated.length > 0) {
-               const { error: orderError } = await db.from('orders').update({ status: 'paid' }).eq('id', data.order_id).neq('status', 'paid');
-               if (orderError) throw orderError;
-               // Kirim notifikasi WhatsApp penjualan & low stock ke admin
-               triggerOrderNotifications(db, data.order_id, params.reference).catch((e) => console.error('[WA] triggerOrderNotifications error:', e));
+              const { error: orderError } = await db.from('orders').update({ status: 'paid' }).eq('id', data.order_id).neq('status', 'paid');
+              if (orderError) throw orderError;
+              // Kirim notifikasi WhatsApp penjualan & low stock ke admin
+              triggerOrderNotifications(db, data.order_id, params.reference).catch((e) => console.error('[WA] triggerOrderNotifications error:', e));
             }
             data.status = 'paid';
-         }
+          }
+        } else {
+          const tokopay = await checkTokopayOrder(params.reference);
+          if (tokopay && isTokopaySuccessful(tokopay.status)) {
+            const transactionId = tokopay.trx_id ?? null;
+            const { data: updated, error: paymentError } = await db
+              .from('payments')
+              .update({ status: 'paid', provider_transaction_id: transactionId, paid_at: new Date().toISOString() })
+              .eq('id', data.id)
+              .neq('status', 'paid')
+              .select('id');
+            if (paymentError) throw paymentError;
+
+            if (updated && updated.length > 0) {
+              const { error: orderError } = await db.from('orders').update({ status: 'paid' }).eq('id', data.order_id).neq('status', 'paid');
+              if (orderError) throw orderError;
+              // Kirim notifikasi WhatsApp penjualan & low stock ke admin
+              triggerOrderNotifications(db, data.order_id, params.reference).catch((e) => console.error('[WA] triggerOrderNotifications error:', e));
+            }
+            data.status = 'paid';
+          }
+        }
       }
 
       const customerEmail = (data.orders as unknown as { customer_email: string })?.customer_email ?? null;
+      // Forward order top up game (Digiflazz) ke provider jika belum diproses
+      const topup = await processTopupFulfillment(db, data.order_id).catch((e) => { console.error('[Topup] error:', e); return null; });
+      if (topup?.attempted) console.info('[Topup] hasil (polling):', JSON.stringify(topup));
       const response: Record<string, unknown> = {
          amount: data.amount,
          status: data.status,

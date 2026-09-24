@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request }) => {
     const price = Number(form.get('price'));
     const rawOriginalPrice = form.get('original_price');
     const original_price = rawOriginalPrice && !isNaN(Number(rawOriginalPrice)) && Number(rawOriginalPrice) > 0 ? Number(rawOriginalPrice) : null;
-    let packages: Array<{ name?: string; duration?: string; price?: number; active?: boolean }> = [];
+    let packages: Array<{ name?: string; duration?: string; price?: number; active?: boolean; digiflazz_sku?: string; requires_customer_no?: boolean; customer_no_label?: string }> = [];
     try { packages = JSON.parse(text(form.get('packages') || '[]')); } catch { return Response.json({ message: 'Format paket tidak valid.' }, { status: 400 }); }
     if (!Array.isArray(packages) || packages.some((item) => !String(item.name ?? '').trim() || !String(item.duration ?? '').trim() || !Number.isInteger(Number(item.price)) || Number(item.price) <= 0)) return Response.json({ message: 'Lengkapi nama, durasi, dan harga setiap paket.' }, { status: 400 });
     const active = form.get('active') === 'on';
@@ -49,7 +49,20 @@ export const POST: APIRoute = async ({ request }) => {
     if (productError) throw productError;
     const { data: existingPackages, error: existingPackagesError } = await db.from('product_packages').select('id').eq('product_id', id).order('created_at');
     if (existingPackagesError) throw existingPackagesError;
-    const packageRows = packages.map((item) => ({ product_id: id, name: item.name!.trim(), duration: item.duration!.trim(), price: Number(item.price), active: item.active !== false }));
+    const packageRows = packages.map((item) => {
+      const sku = String(item.digiflazz_sku ?? '').trim();
+      const requiresCustomerNo = sku ? item.requires_customer_no === true : false;
+      return {
+        product_id: id,
+        name: item.name!.trim(),
+        duration: item.duration!.trim(),
+        price: Number(item.price),
+        active: item.active !== false,
+        digiflazz_sku: sku || null,
+        requires_customer_no: requiresCustomerNo,
+        customer_no_label: requiresCustomerNo ? (String(item.customer_no_label ?? '').trim() || 'User ID') : (String(item.customer_no_label ?? '').trim() || null),
+      };
+    });
     for (const [index, packageRow] of packageRows.entries()) {
       const existingId = existingPackages?.[index]?.id;
       const { error: packageError } = existingId
